@@ -59,14 +59,7 @@ A web-based application that uses your camera to detect and recognize multiple A
 - **Direction**: Index finger pointing upward/toward self
 - **Note**: In conversation, would point to chest
 
-### 7. **Why** 🤷
-- **Hand Position**: Open hand with palm facing up
-- **Fingers**: All fingers together (not spread)
-- **Palm**: Facing upward like holding something
-- **Movement**: In ASL, includes side-to-side shake
-- **Note**: Static detection shows palm-up position
-
-### 8. **No** ✌️
+### 7. **No** ✌️
 - **Hand Position**: Two fingers extended
 - **Fingers**:
   - Index: Extended
@@ -75,7 +68,7 @@ A web-based application that uses your camera to detect and recognize multiple A
 - **Movement**: In ASL, fingers tap together with thumb
 - **Note**: Similar to peace sign
 
-### 9. **Okay/OK** 👌
+### 8. **Okay/OK** 👌
 - **Hand Position**: Circle with thumb and index
 - **Fingers**:
   - Thumb tip touching index finger tip
