@@ -5,14 +5,82 @@ A web-based application that uses your camera to detect and recognize multiple A
 ## Features
 
 - Real-time hand tracking using MediaPipe with 21 landmark points
-- Bounding box visualization around detected hands with gesture labels
-- Recognition of multiple ASL gestures:
-  - **Hello**: Open palm with all fingers extended
-  - **I Love You**: Thumb, index, and pinky extended; middle and ring fingers down
-  - **Good**: Thumbs up with other fingers folded
-  - **Bad**: Thumbs down with other fingers folded
-- Visual feedback with hand landmarks and skeletal connections
-- Simple and intuitive user interface
+- Color-coded finger visualization:
+  - Thumb: Red
+  - Index: Teal
+  - Middle: Blue
+  - Ring: Yellow
+  - Pinky: Purple
+- Machine learning training mode to improve accuracy with your hand gestures
+- Confidence meter showing detection accuracy
+- Bounding box with gesture labels
+
+## Supported Gestures
+
+### 1. **Hello** 👋
+- **Hand Position**: Open palm facing forward
+- **Fingers**: All fingers extended and spread apart
+- **Palm**: Facing the camera
+- **Movement**: Can add a gentle wave motion
+
+### 2. **I Love You** 🤟
+- **Hand Position**: Face palm forward
+- **Fingers**: 
+  - Thumb: Extended outward
+  - Index: Extended upward
+  - Middle: Folded down
+  - Ring: Folded down
+  - Pinky: Extended upward
+- **Note**: Forms the letters I, L, and Y simultaneously
+
+### 3. **Good/Thumbs Up** 👍
+- **Hand Position**: Fist with thumb up
+- **Fingers**: All fingers folded into palm
+- **Thumb**: Extended upward
+- **Orientation**: Thumb pointing to the sky
+
+### 4. **Bad/Thumbs Down** 👎
+- **Hand Position**: Fist with thumb down
+- **Fingers**: All fingers folded into palm
+- **Thumb**: Extended downward
+- **Orientation**: Thumb pointing to the ground
+
+### 5. **Yes** ✊
+- **Hand Position**: Closed fist
+- **Fingers**: All fingers and thumb folded tightly
+- **Movement**: In ASL, typically moved up and down like knocking
+- **Note**: Static detection shows closed fist
+
+### 6. **I/I'm/Me** ☝️
+- **Hand Position**: Pointing to self
+- **Fingers**:
+  - Index: Extended straight up
+  - Other fingers: Folded into palm
+- **Direction**: Index finger pointing upward/toward self
+- **Note**: In conversation, would point to chest
+
+### 7. **Why** 🤷
+- **Hand Position**: Open hand with palm facing up
+- **Fingers**: All fingers together (not spread)
+- **Palm**: Facing upward like holding something
+- **Movement**: In ASL, includes side-to-side shake
+- **Note**: Static detection shows palm-up position
+
+### 8. **No** ✌️
+- **Hand Position**: Two fingers extended
+- **Fingers**:
+  - Index: Extended
+  - Middle: Extended
+  - Others: Folded
+- **Movement**: In ASL, fingers tap together with thumb
+- **Note**: Similar to peace sign
+
+### 9. **Okay/OK** 👌
+- **Hand Position**: Circle with thumb and index
+- **Fingers**:
+  - Thumb tip touching index finger tip
+  - Middle, ring, pinky: Extended upward
+- **Shape**: Forms an "O" with thumb and index
 
 ## How to Run
 
@@ -52,6 +120,18 @@ Works best in modern browsers with WebRTC support:
 - Firefox
 - Safari
 
+## Training Mode
+
+The app includes a training mode to improve gesture recognition accuracy:
+
+1. Click "Train Mode" button
+2. Select a gesture from the list
+3. Make the gesture with your hand
+4. Click "Capture Sample" to save it
+5. Repeat for better accuracy (5-10 samples recommended per gesture)
+
+Training data is stored locally in your browser and persists between sessions.
+
 ## Privacy
 
-All processing happens locally in your browser. No video data is sent to any server.# asl-reader
+All processing happens locally in your browser. No video data is sent to any server.
