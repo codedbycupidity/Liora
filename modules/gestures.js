@@ -111,8 +111,10 @@ function isBadGesture(landmarks) {
 function isYesGesture(landmarks) {
     const thumbTip = landmarks[4];
     const thumbMCP = landmarks[2];
+    const thumbIP = landmarks[3];
     const indexTip = landmarks[8];
     const indexMCP = landmarks[5];
+    const indexPIP = landmarks[6];
     const middleTip = landmarks[12];
     const middleMCP = landmarks[9];
     const ringTip = landmarks[16];
@@ -120,8 +122,19 @@ function isYesGesture(landmarks) {
     const pinkyTip = landmarks[20];
     const pinkyMCP = landmarks[17];
     
-    const thumbFolded = Math.abs(thumbTip.y - thumbMCP.y) < 0.1;
-    const indexFolded = indexTip.y > indexMCP.y;
+    // Check if thumb is folded (either wrapped around fingers or tucked to side)
+    // Calculate distance between thumb tip and index knuckle (typical fist position)
+    const thumbToIndexDistance = Math.sqrt(
+        Math.pow(thumbTip.x - indexMCP.x, 2) + 
+        Math.pow(thumbTip.y - indexMCP.y, 2)
+    );
+    
+    // Thumb is considered folded if it's close to the palm/fingers
+    const thumbFolded = thumbToIndexDistance < 0.15 || 
+                       (Math.abs(thumbTip.y - thumbMCP.y) < 0.1 && Math.abs(thumbTip.x - thumbMCP.x) < 0.1);
+    
+    // All fingers must be folded down
+    const indexFolded = indexTip.y > indexPIP.y - 0.02;
     const middleFolded = middleTip.y > middleMCP.y;
     const ringFolded = ringTip.y > ringMCP.y;
     const pinkyFolded = pinkyTip.y > pinkyMCP.y;
