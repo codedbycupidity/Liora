@@ -22,6 +22,18 @@ class ASLGestureApp {
         await this.camera.initialize();
         this.camera.onResults(this.handleResults.bind(this));
         this.ui.setupEventListeners();
+        
+        // Check if any training data was loaded
+        const totalSamples = Object.values(this.training.trainingData)
+            .reduce((sum, samples) => sum + samples.length, 0);
+        
+        if (totalSamples > 0) {
+            console.log(`Loaded ${totalSamples} training samples from previous sessions`);
+            this.ui.updateStatus(`Ready - Loaded ${totalSamples} training samples`);
+            setTimeout(() => {
+                this.ui.updateStatus('Click "Start Camera" to begin');
+            }, 3000);
+        }
     }
 
     setupEventHandlers() {

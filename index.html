@@ -3,36 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASL Gesture Recognition</title>
+    <title>ASL Gesture Recognition - Learn Sign Language</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f0f0f0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 2rem;
+            color: #333;
         }
 
         h1 {
-            color: #333;
-            margin-bottom: 20px;
+            color: #1a1a1a;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            max-width: 1200px;
+            width: 100%;
         }
 
         .container {
             position: relative;
-            max-width: 640px;
+            max-width: 720px;
             width: 100%;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         video {
             width: 100%;
-            max-width: 640px;
-            height: 480px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            height: auto;
+            aspect-ratio: 4/3;
             display: block;
+            background: #000;
         }
 
         canvas {
@@ -40,99 +70,147 @@
             top: 0;
             left: 0;
             width: 100%;
-            max-width: 640px;
-            height: 480px;
-            border-radius: 8px;
+            height: 100%;
             pointer-events: none;
         }
 
         .info-panel {
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
+            border: 1px solid #e9ecef;
         }
 
         .status {
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
         }
 
         .gesture-detected {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4CAF50;
-            margin-top: 10px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-top: 0.5rem;
         }
 
         .gesture-info {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f5f5f5;
+            margin-top: 2rem;
+            padding: 2rem;
+            background: white;
             border-radius: 8px;
-            text-align: left;
+            border: 1px solid #e9ecef;
         }
 
         .gesture-info h3 {
-            margin-top: 0;
+            margin: 0 0 1rem 0;
             color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
         }
 
         .gesture-list {
             list-style: none;
             padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
         }
 
         .gesture-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #ddd;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            transition: background 0.2s ease;
         }
 
-        .gesture-list li:last-child {
-            border-bottom: none;
+        .gesture-list li:hover {
+            background: #e9ecef;
+        }
+
+        .gesture-list li strong {
+            color: #2c3e50;
+            font-weight: 600;
         }
 
         .loading {
             color: #666;
+            font-weight: 400;
         }
 
         .error {
-            color: #f44336;
+            color: #e53e3e;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 1.5rem;
+            }
+            
+            .gesture-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
         #startButton, .mode-button {
-            background-color: #4CAF50;
+            background: #5c7cfa;
             color: white;
             border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 4px;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 6px;
             cursor: pointer;
-            margin: 0 5px 20px 5px;
+            transition: all 0.2s ease;
         }
 
         #startButton:hover, .mode-button:hover {
-            background-color: #45a049;
+            background: #4c6ef5;
+        }
+
+        #startButton:active, .mode-button:active {
+            transform: scale(0.98);
         }
 
         #startButton:disabled, .mode-button:disabled {
-            background-color: #cccccc;
+            background: #dee2e6;
+            color: #adb5bd;
             cursor: not-allowed;
+            transform: none;
         }
 
         .mode-button.active {
-            background-color: #2196F3;
+            background: #495057;
         }
 
         .training-panel {
             display: none;
-            margin-top: 20px;
-            padding: 20px;
+            margin-top: 2rem;
+            padding: 2rem;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e9ecef;
         }
 
         .training-controls {
@@ -144,40 +222,51 @@
         }
 
         .gesture-button {
-            padding: 8px 16px;
-            background-color: #f0f0f0;
-            border: 2px solid #ddd;
-            border-radius: 4px;
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
+            font-weight: 500;
         }
 
         .gesture-button:hover {
-            background-color: #e0e0e0;
+            border-color: #5c7cfa;
+            background: #f8f9fa;
         }
 
         .gesture-button.active {
-            background-color: #2196F3;
+            background: #5c7cfa;
             color: white;
-            border-color: #1976D2;
+            border-color: #5c7cfa;
         }
 
         .capture-button {
-            background-color: #FF5722;
+            background: #e74c3c;
             color: white;
-            padding: 12px 24px;
+            padding: 1rem 2rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
         }
 
         .capture-button:hover {
-            background-color: #E64A19;
+            background: #c0392b;
+        }
+
+        .capture-button:active {
+            transform: scale(0.98);
         }
 
         .capture-button:disabled {
-            background-color: #cccccc;
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .training-info {
@@ -188,77 +277,80 @@
         }
 
         .confidence-meter {
-            margin-top: 10px;
-            height: 20px;
-            background-color: #f0f0f0;
-            border-radius: 10px;
+            margin-top: 1rem;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
             overflow: hidden;
         }
 
         .confidence-fill {
             height: 100%;
-            background-color: #4CAF50;
+            background: #27ae60;
             transition: width 0.3s ease;
         }
     </style>
 </head>
 <body>
     <h1>ASL Gesture Recognition</h1>
+    <p class="subtitle">Learn and practice American Sign Language with real-time hand tracking</p>
     
-    <div>
-        <button id="startButton">Start Camera</button>
-        <button id="detectModeBtn" class="mode-button active">Detect Mode</button>
-        <button id="trainModeBtn" class="mode-button">Train Mode</button>
-    </div>
+    <div class="main-content">
+        <div class="controls">
+            <button id="startButton">Start Camera</button>
+            <button id="detectModeBtn" class="mode-button active">Detect Mode</button>
+            <button id="trainModeBtn" class="mode-button">Train Mode</button>
+        </div>
     
     <div class="container">
         <video id="webcam" autoplay playsinline></video>
         <canvas id="output"></canvas>
     </div>
     
-    <div class="info-panel">
-        <div class="status">
-            <span id="statusText" class="loading">Click "Start Camera" to begin</span>
+        <div class="info-panel">
+            <div class="status">
+                <span id="statusText" class="loading">Click "Start Camera" to begin</span>
+            </div>
+            <div id="gestureResult" class="gesture-detected"></div>
+            <div class="confidence-meter" style="display: none;">
+                <div class="confidence-fill" id="confidenceFill"></div>
+            </div>
         </div>
-        <div id="gestureResult" class="gesture-detected"></div>
-        <div class="confidence-meter" style="display: none;">
-            <div class="confidence-fill" id="confidenceFill"></div>
-        </div>
-    </div>
 
-    <div class="training-panel" id="trainingPanel">
-        <h3>Training Mode</h3>
-        <p>Select a gesture and capture samples to improve accuracy:</p>
-        <div class="training-controls">
-            <button class="gesture-button" data-gesture="Hello">Hello</button>
-            <button class="gesture-button" data-gesture="I Love You">I Love You</button>
-            <button class="gesture-button" data-gesture="Good">Good</button>
-            <button class="gesture-button" data-gesture="Bad">Bad</button>
-            <button class="gesture-button" data-gesture="Yes">Yes</button>
-            <button class="gesture-button" data-gesture="I/I'm">I/I'm</button>
-            <button class="gesture-button" data-gesture="No">No</button>
-            <button class="gesture-button" data-gesture="Okay">Okay</button>
+        <div class="training-panel" id="trainingPanel">
+            <h3>Training Mode</h3>
+            <p>Select a gesture and capture samples to improve accuracy:</p>
+            <div class="training-controls">
+                <button class="gesture-button" data-gesture="Hello">Hello</button>
+                <button class="gesture-button" data-gesture="I Love You">I Love You</button>
+                <button class="gesture-button" data-gesture="Good">Good</button>
+                <button class="gesture-button" data-gesture="Bad">Bad</button>
+                <button class="gesture-button" data-gesture="Yes">Yes</button>
+                <button class="gesture-button" data-gesture="I/I'm">I/I'm</button>
+                <button class="gesture-button" data-gesture="No">No</button>
+                <button class="gesture-button" data-gesture="Okay">Okay</button>
+            </div>
+            <button class="capture-button" id="captureBtn" disabled>Capture Sample</button>
+            <div class="training-info" id="trainingInfo">Select a gesture to start training</div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="mode-button" id="exportGestureBtn">Export Gesture</button>
+                <button class="mode-button" id="exportAllBtn">Export All Data</button>
+            </div>
         </div>
-        <button class="capture-button" id="captureBtn" disabled>Capture Sample</button>
-        <div class="training-info" id="trainingInfo">Select a gesture to start training</div>
-        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-            <button class="mode-button" id="exportGestureBtn" style="background-color: #9C27B0;">Export Gesture</button>
-            <button class="mode-button" id="exportAllBtn" style="background-color: #673AB7;">Export All Data</button>
-        </div>
-    </div>
 
-    <div class="gesture-info">
-        <h3>Supported Gestures:</h3>
-        <ul class="gesture-list">
-            <li><strong>Hello:</strong> Open palm with all fingers extended</li>
-            <li><strong>I Love You:</strong> Thumb, index, and pinky extended; middle and ring fingers down</li>
-            <li><strong>Good:</strong> Thumbs up with other fingers folded</li>
-            <li><strong>Bad:</strong> Thumbs down with other fingers folded</li>
-            <li><strong>Yes:</strong> Closed fist (like knocking)</li>
-            <li><strong>I/I'm:</strong> Point index finger upward (to self)</li>
-            <li><strong>No:</strong> Index and middle finger extended together</li>
-            <li><strong>Okay:</strong> Thumb and index finger forming a circle, other fingers up</li>
-        </ul>
+        <div class="gesture-info">
+            <h3>Supported Gestures</h3>
+            <ul class="gesture-list">
+                <li><strong>Hello:</strong> Open palm with all fingers extended</li>
+                <li><strong>I Love You:</strong> Thumb, index, and pinky extended; middle and ring fingers down</li>
+                <li><strong>Good:</strong> Thumbs up with other fingers folded</li>
+                <li><strong>Bad:</strong> Thumbs down with other fingers folded</li>
+                <li><strong>Yes:</strong> Closed fist (like knocking)</li>
+                <li><strong>I/I'm:</strong> Point index finger upward (to self)</li>
+                <li><strong>No:</strong> Index and middle finger extended together</li>
+                <li><strong>Okay:</strong> Thumb and index finger forming a circle, other fingers up</li>
+            </ul>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>

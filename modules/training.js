@@ -3,6 +3,7 @@ import { detectGesture, GESTURES } from './gestures.js';
 export class TrainingManager {
     constructor() {
         this.trainingData = this.loadTrainingData();
+        this.loadServerTrainingData();
     }
 
     loadTrainingData() {
@@ -12,6 +13,40 @@ export class TrainingManager {
         } catch (e) {
             console.error('Error loading training data:', e);
             return {};
+        }
+    }
+
+    async loadServerTrainingData() {
+        try {
+            const response = await fetch('http://localhost:8000/api/training-data/load');
+            if (response.ok) {
+                const serverData = await response.json();
+                
+                // Merge server data with existing local data
+                for (const [gesture, samples] of Object.entries(serverData)) {
+                    if (!this.trainingData[gesture]) {
+                        this.trainingData[gesture] = [];
+                    }
+                    
+                    // Add server samples that don't already exist locally
+                    samples.forEach(sample => {
+                        // Check if this sample already exists (simple comparison)
+                        const exists = this.trainingData[gesture].some(existing => 
+                            JSON.stringify(existing) === JSON.stringify(sample)
+                        );
+                        
+                        if (!exists) {
+                            this.trainingData[gesture].push(sample);
+                        }
+                    });
+                }
+                
+                // Save the merged data to localStorage
+                this.saveTrainingData();
+                console.log('Loaded training data from server:', Object.keys(serverData).map(g => `${g}: ${serverData[g].length} samples`).join(', '));
+            }
+        } catch (e) {
+            console.log('Could not load server training data (server may not be running):', e.message);
         }
     }
 
@@ -36,6 +71,9 @@ export class TrainingManager {
         
         this.trainingData[gesture].push(sample);
         this.saveTrainingData();
+        
+        // Also save to server
+        this.saveToServer(gesture, sample);
         
         return this.trainingData[gesture].length;
     }
@@ -143,8 +181,6 @@ export class TrainingManager {
     }
 
     async saveToServer(gesture, landmarks) {
-        // This method can be implemented if you have a server endpoint
-        // For now, it's a placeholder that could save to a local server
         const sample = {
             gesture: gesture,
             landmarks: landmarks,
@@ -152,7 +188,7 @@ export class TrainingManager {
         };
 
         try {
-            const response = await fetch('/api/training-data', {
+            const response = await fetch('http://localhost:8000/api/training-data', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

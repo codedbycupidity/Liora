@@ -15,6 +15,48 @@ PORT = 8000
 TRAINING_DATA_DIR = "training-data"
 
 class ASLRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/api/training-data/load':
+            try:
+                # Collect all training data from the training-data directory
+                all_training_data = {}
+                
+                if os.path.exists(TRAINING_DATA_DIR):
+                    for gesture_folder in os.listdir(TRAINING_DATA_DIR):
+                        gesture_path = os.path.join(TRAINING_DATA_DIR, gesture_folder)
+                        if os.path.isdir(gesture_path):
+                            # Convert folder name back to gesture name
+                            gesture_name = gesture_folder.replace('_', '/')
+                            all_training_data[gesture_name] = []
+                            
+                            # Read all JSON files in the gesture folder
+                            for filename in os.listdir(gesture_path):
+                                if filename.endswith('.json'):
+                                    filepath = os.path.join(gesture_path, filename)
+                                    try:
+                                        with open(filepath, 'r') as f:
+                                            data = json.load(f)
+                                            if 'landmarks' in data:
+                                                all_training_data[gesture_name].append(data['landmarks'])
+                                    except Exception as e:
+                                        print(f"Error reading {filepath}: {e}")
+                
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps(all_training_data).encode())
+                
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': str(e)}).encode())
+        else:
+            # Default file serving
+            super().do_GET()
+    
     def do_POST(self):
         if self.path == '/api/training-data':
             content_length = int(self.headers['Content-Length'])
