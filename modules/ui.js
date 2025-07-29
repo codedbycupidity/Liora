@@ -40,7 +40,7 @@ export class UIManager {
 
     updateGestureResult(gesture, confidence = null) {
         if (gesture && gesture !== 'None') {
-            this.elements.gestureResult.textContent = `✋ "${gesture}" detected!`;
+            this.elements.gestureResult.textContent = `"${gesture}" detected`;
             if (confidence !== null) {
                 this.elements.confidenceMeter.style.display = 'block';
                 this.elements.confidenceFill.style.width = `${confidence * 100}%`;

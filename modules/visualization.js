@@ -82,14 +82,14 @@ export function getBoundingBox(landmarks, canvasWidth, canvasHeight) {
 }
 
 export function drawBoundingBox(ctx, box, gesture) {
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(box.x, box.y, box.width, box.height);
     
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(box.x, box.y - 30, box.width, 30);
     
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = '#000000';
     ctx.font = 'bold 20px Arial';
     ctx.fillText(gesture, box.x + 10, box.y - 8);
 }
