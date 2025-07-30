@@ -1,6 +1,7 @@
 /**
  * Visualization module for hand tracking display
  * Handles all drawing operations on the canvas
+ * Also supports face landmark visualization for accurate chin detection
  */
 
 // Color scheme for different parts of the hand
@@ -185,4 +186,72 @@ export function drawBoundingBox(ctx, box, gesture) {
         box.x + 10,         // 10px padding from left
         box.y - 8           // Vertically centered in label
     );
+}
+
+/**
+ * Draw face landmarks with chin highlighted
+ * @param {CanvasRenderingContext2D} ctx - Canvas context for drawing
+ * @param {Array} faceLandmarks - Face landmarks from MediaPipe
+ * @param {number} canvasWidth - Width of canvas in pixels
+ * @param {number} canvasHeight - Height of canvas in pixels
+ */
+export function drawFaceLandmarks(ctx, faceLandmarks, canvasWidth, canvasHeight) {
+    if (!faceLandmarks) return;
+    
+    // MediaPipe face mesh has 468 landmarks
+    // Landmark 152 is the chin tip
+    const chinIndex = 152;
+    
+    // Draw only key face points for performance
+    const keyPoints = [
+        152,  // Chin tip
+        10,   // Forehead
+        234,  // Right cheek
+        454   // Left cheek
+    ];
+    
+    // Draw small dots for key face points
+    keyPoints.forEach((index, i) => {
+        if (faceLandmarks[index]) {
+            const landmark = faceLandmarks[index];
+            
+            // Special highlight for chin
+            if (index === chinIndex) {
+                // Draw larger circle for chin with glow effect
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                ctx.beginPath();
+                ctx.arc(
+                    landmark.x * canvasWidth,
+                    landmark.y * canvasHeight,
+                    10,  // Larger radius
+                    0,
+                    2 * Math.PI
+                );
+                ctx.fill();
+                
+                // Inner dot
+                ctx.fillStyle = '#FFD700';
+            } else {
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.5)';
+            }
+            
+            // Draw the landmark dot
+            ctx.beginPath();
+            ctx.arc(
+                landmark.x * canvasWidth,
+                landmark.y * canvasHeight,
+                3,  // Small radius
+                0,
+                2 * Math.PI
+            );
+            ctx.fill();
+            
+            // Label the chin
+            if (index === chinIndex) {
+                ctx.fillStyle = '#FFD700';
+                ctx.font = '12px Arial';
+                ctx.fillText('Chin', landmark.x * canvasWidth + 5, landmark.y * canvasHeight - 5);
+            }
+        }
+    });
 }

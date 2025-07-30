@@ -1,11 +1,12 @@
 /**
  * Camera module for MediaPipe integration
- * Handles camera access and hand tracking pipeline
+ * Handles camera access and holistic body tracking pipeline
+ * Tracks face, pose, and hands for more accurate gesture detection
  */
 
 /**
  * CameraManager class encapsulates all MediaPipe functionality
- * Manages camera stream, hand detection, and results callback
+ * Manages camera stream, holistic detection, and results callback
  */
 export class CameraManager {
     constructor(videoElement, canvasElement) {
@@ -16,7 +17,7 @@ export class CameraManager {
         
         // MediaPipe objects
         this.camera = null;                    // MediaPipe Camera instance
-        this.hands = null;                     // MediaPipe Hands instance
+        this.holistic = null;                  // MediaPipe Holistic instance
         
         // State management
         this.isDetecting = false;              // Flag for detection status
@@ -28,8 +29,8 @@ export class CameraManager {
      * Required because scripts load asynchronously
      */
     async waitForMediaPipe() {
-        // Poll until both Hands and Camera are available on window object
-        while (typeof window.Hands === 'undefined' || typeof window.Camera === 'undefined') {
+        // Poll until both Holistic and Camera are available on window object
+        while (typeof window.Holistic === 'undefined' || typeof window.Camera === 'undefined') {
             console.log('Waiting for MediaPipe to load...');
             await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -37,37 +38,49 @@ export class CameraManager {
     }
 
     /**
-     * Initialize MediaPipe Hands with configuration
+     * Initialize MediaPipe Holistic with configuration
      * Must be called before starting camera
      */
     async initialize() {
         // Ensure MediaPipe is loaded
         await this.waitForMediaPipe();
         
-        // Create MediaPipe Hands instance
-        this.hands = new window.Hands({
+        // Create MediaPipe Holistic instance
+        this.holistic = new window.Holistic({
             locateFile: (file) => {
                 // Use CDN for MediaPipe model files
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
             }
         });
 
-        // Configure hand detection parameters
-        this.hands.setOptions({
-            maxNumHands: 1,                    // Track only one hand
+        // Configure holistic detection parameters
+        this.holistic.setOptions({
             modelComplexity: 1,                // Model complexity (0, 1, or 2)
+            smoothLandmarks: true,             // Smooth landmark positions
+            enableSegmentation: false,         // We don't need segmentation
+            smoothSegmentation: false,
+            refineFaceLandmarks: false,        // Basic face landmarks are enough
             minDetectionConfidence: 0.5,       // Detection threshold
             minTrackingConfidence: 0.5         // Tracking threshold
         });
 
         // Set up results callback
-        this.hands.onResults((results) => {
+        this.holistic.onResults((results) => {
             if (this.onResultsCallback) {
-                this.onResultsCallback(results);
+                // Transform results to include hand landmarks in expected format
+                // Prefer right hand for gestures (appears on left side when facing camera)
+                const handLandmarks = results.rightHandLandmarks || results.leftHandLandmarks;
+                const transformedResults = {
+                    image: results.image,
+                    multiHandLandmarks: handLandmarks ? [handLandmarks] : [],
+                    faceLandmarks: results.faceLandmarks,
+                    poseLandmarks: results.poseLandmarks
+                };
+                this.onResultsCallback(transformedResults);
             }
         });
         
-        console.log('MediaPipe initialized successfully');
+        console.log('MediaPipe Holistic initialized successfully');
     }
 
     /**
@@ -78,9 +91,9 @@ export class CameraManager {
         // Create MediaPipe Camera instance
         this.camera = new window.Camera(this.videoElement, {
             onFrame: async () => {
-                // Send each frame to hand detection if active
+                // Send each frame to holistic detection if active
                 if (this.isDetecting) {
-                    await this.hands.send({image: this.videoElement});
+                    await this.holistic.send({image: this.videoElement});
                 }
             },
             width: 640,     // Camera resolution

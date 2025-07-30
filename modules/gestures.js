@@ -13,6 +13,7 @@ export const GESTURES = {
     I_ME: 'I/I\'m',             // Index finger pointing up
     NO: 'No',                   // Index and middle fingers extended
     OKAY: 'Okay',               // Thumb and index forming circle
+    THANK_YOU: 'Thank You',     // Hand from chin moving forward
     NONE: 'None'                // No gesture detected
 };
 
@@ -26,13 +27,14 @@ export function detectGesture(landmarks) {
     // Check each gesture in order of specificity
     // More specific gestures (like I Love You) are checked before general ones (like Hello)
     if (isILoveYouGesture(landmarks)) return GESTURES.I_LOVE_YOU;
-    if (isHelloGesture(landmarks)) return GESTURES.HELLO;
+    if (isOkayGesture(landmarks)) return GESTURES.OKAY;
     if (isGoodGesture(landmarks)) return GESTURES.GOOD;
     if (isBadGesture(landmarks)) return GESTURES.BAD;
     if (isYesGesture(landmarks)) return GESTURES.YES;
     if (isIGesture(landmarks)) return GESTURES.I_ME;
     if (isNoGesture(landmarks)) return GESTURES.NO;
-    if (isOkayGesture(landmarks)) return GESTURES.OKAY;
+    if (isThankYouGesture(landmarks)) return GESTURES.THANK_YOU;
+    if (isHelloGesture(landmarks)) return GESTURES.HELLO;
     return GESTURES.NONE;
 }
 
@@ -311,4 +313,15 @@ function isOkayGesture(landmarks) {
     const pinkyExtended = pinkyTip.y < pinkyPIP.y;
     
     return thumbIndexTouching && middleExtended && ringExtended && pinkyExtended;
+}
+
+/**
+ * Detect "Thank You" gesture (static position)
+ * This is now just a placeholder - actual detection happens via motion tracking
+ * We let the motion tracker determine if hand is at chin using face landmarks
+ */
+function isThankYouGesture(landmarks) {
+    // Return false to let motion tracking handle this gesture
+    // Thank You is detected when open hand (Hello) moves from chin
+    return false;
 }

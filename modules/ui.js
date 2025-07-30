@@ -66,11 +66,41 @@ export class UIManager {
      * Display detected gesture and confidence level
      * @param {string} gesture - Detected gesture name
      * @param {number|null} confidence - Confidence score (0-1)
+     * @param {Object|null} motionFeedback - Motion tracking feedback
      */
-    updateGestureResult(gesture, confidence = null) {
+    updateGestureResult(gesture, confidence = null, motionFeedback = null) {
         if (gesture && gesture !== 'None') {
             // Show gesture name
             this.elements.gestureResult.textContent = `"${gesture}" detected`;
+            
+            // Add motion feedback if provided
+            if (motionFeedback && motionFeedback.message) {
+                // Clear previous feedback if exists
+                const existingFeedback = this.elements.gestureResult.querySelector('.motion-feedback');
+                if (existingFeedback) {
+                    existingFeedback.remove();
+                }
+                
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.style.fontSize = '0.9em';
+                feedbackDiv.style.marginTop = '0.5rem';
+                feedbackDiv.style.color = '#666';
+                feedbackDiv.style.fontWeight = '500';
+                feedbackDiv.textContent = motionFeedback.message;
+                feedbackDiv.className = 'motion-feedback';
+                this.elements.gestureResult.appendChild(feedbackDiv);
+                
+                // Update confidence based on motion progress if available
+                if (motionFeedback.progress !== undefined) {
+                    confidence = motionFeedback.progress;
+                }
+            } else {
+                // Remove feedback if none provided
+                const existingFeedback = this.elements.gestureResult.querySelector('.motion-feedback');
+                if (existingFeedback) {
+                    existingFeedback.remove();
+                }
+            }
             
             // Show confidence meter if confidence provided
             if (confidence !== null) {
