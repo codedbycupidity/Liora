@@ -11,8 +11,10 @@ A web-based application that uses your camera to detect and recognize multiple A
   - Middle: Blue
   - Ring: Yellow
   - Pinky: Purple
+- Motion tracking for movement-based gestures (Yes, Thank You)
 - Machine learning training mode to improve accuracy with your hand gestures
 - Confidence meter showing detection accuracy
+- Visual feedback for motion gestures
 - Bounding box with gesture labels
 - Automatic loading of training data from previous sessions
 - Export/import training data for backup and sharing
@@ -53,8 +55,9 @@ A web-based application that uses your camera to detect and recognize multiple A
 - **Hand Position**: Closed fist (works in any orientation)
 - **Fingers**: All fingers and thumb folded tightly
 - **Thumb**: Can be wrapped around fingers or tucked to the side
-- **Movement**: In ASL, typically moved up and down like knocking
-- **Note**: Detects fist regardless of knuckle orientation (up, left, right)
+- **Movement**: Up and down knocking motion (2+ bounces)
+- **Motion Detection**: Tracks vertical movement and counts bounces
+- **Note**: Detects both static fist and knocking motion
 
 ### 6. **I/I'm/Me** ☝️
 - **Hand Position**: Pointing to self
@@ -79,6 +82,13 @@ A web-based application that uses your camera to detect and recognize multiple A
   - Thumb tip touching index finger tip
   - Middle, ring, pinky: Extended upward
 - **Shape**: Forms an "O" with thumb and index
+
+### 9. **Thank You** 🙏
+- **Hand Position**: Open hand starting at chin level
+- **Fingers**: All fingers extended (flat hand)
+- **Movement**: Hand moves forward and down from chin
+- **Motion Detection**: Tracks hand starting at chin and moving forward/down
+- **Note**: Requires both correct hand position and forward motion
 
 ## How to Run
 
@@ -159,15 +169,19 @@ The app is built with a modular architecture:
 - `modules/training.js` - Machine learning and data management
 - `modules/camera.js` - MediaPipe camera integration
 - `modules/ui.js` - User interface management
+- `modules/motion.js` - Motion tracking for movement-based gestures
 - `server.py` - Python server for training data persistence
 
 ### Hand Tracking
-The app uses MediaPipe Hands for real-time hand tracking and landmark detection:
+The app uses MediaPipe Holistic for comprehensive tracking:
 - 21 hand landmarks tracked in 3D (x, y, z coordinates)
+- Face landmarks for accurate chin position detection
+- Pose landmarks for body context (optional)
 - Finger extension/flexion determined by comparing tip and joint positions
 - Bounding box calculated from min/max landmark coordinates
 - Colored connections show hand skeleton structure
 - Each finger has a unique color for easy identification
+- Chin position highlighted in gold for "Thank You" gesture reference
 
 ### Gesture Recognition
 1. **Rule-based detection**: Primary detection using geometric analysis of hand landmarks
@@ -175,6 +189,13 @@ The app uses MediaPipe Hands for real-time hand tracking and landmark detection:
    - Calculating distance between current pose and stored samples
    - Converting distance to confidence score (0-1)
    - Lower distance = higher confidence
+3. **Motion Tracking**: For movement-based gestures:
+   - Tracks hand position history over time
+   - Detects motion patterns (up/down for Yes, forward/down for Thank You)
+   - Uses state machines to track gesture phases
+   - Provides real-time feedback during motion
+   - **Accurate Chin Detection**: When face is visible, uses actual chin position (landmark 152)
+   - Falls back to estimated position (upper 40% of frame) when face not detected
 
 ## Browser Compatibility
 

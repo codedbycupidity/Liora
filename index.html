@@ -329,6 +329,7 @@
                 <button class="gesture-button" data-gesture="I/I'm">I/I'm</button>
                 <button class="gesture-button" data-gesture="No">No</button>
                 <button class="gesture-button" data-gesture="Okay">Okay</button>
+                <button class="gesture-button" data-gesture="Thank You">Thank You</button>
             </div>
             <button class="capture-button" id="captureBtn" disabled>Capture Sample</button>
             <div class="training-info" id="trainingInfo">Select a gesture to start training</div>
@@ -345,15 +346,17 @@
                 <li><strong>I Love You:</strong> Thumb, index, and pinky extended; middle and ring fingers down</li>
                 <li><strong>Good:</strong> Thumbs up with other fingers folded</li>
                 <li><strong>Bad:</strong> Thumbs down with other fingers folded</li>
-                <li><strong>Yes:</strong> Closed fist (like knocking)</li>
+                <li><strong>Yes:</strong> Closed fist with up-down knocking motion</li>
                 <li><strong>I/I'm:</strong> Point index finger upward (to self)</li>
                 <li><strong>No:</strong> Index and middle finger extended together</li>
                 <li><strong>Okay:</strong> Thumb and index finger forming a circle, other fingers up</li>
+                <li><strong>Thank You:</strong> Open hand at chin moving forward and down</li>
             </ul>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script type="module" src="app.js"></script>

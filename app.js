@@ -3,10 +3,11 @@
 
 // Import all necessary modules
 import { GESTURES } from './modules/gestures.js';
-import { drawHandConnections, drawHandLandmarks, getBoundingBox, drawBoundingBox } from './modules/visualization.js';
+import { drawHandConnections, drawHandLandmarks, getBoundingBox, drawBoundingBox, drawFaceLandmarks } from './modules/visualization.js';
 import { TrainingManager } from './modules/training.js';
 import { UIManager } from './modules/ui.js';
 import { CameraManager } from './modules/camera.js';
+import { MotionTracker } from './modules/motion.js';
 
 /**
  * Main application class that coordinates all components
@@ -22,6 +23,7 @@ class ASLGestureApp {
         this.ui = new UIManager();           // Handles all UI interactions
         this.training = new TrainingManager(); // Manages training data and ML features
         this.camera = new CameraManager(this.videoElement, this.canvasElement); // Handles MediaPipe
+        this.motion = new MotionTracker();   // Handles motion-based gesture detection
         
         // Store current hand landmarks for gesture detection
         this.currentLandmarks = null;
@@ -132,6 +134,14 @@ class ASLGestureApp {
             const landmarks = results.multiHandLandmarks[0];
             this.currentLandmarks = landmarks;
             
+            // Add current frame to motion tracker with face landmarks if available
+            this.motion.addFrame(landmarks, results.faceLandmarks);
+            
+            // Draw face landmarks if available (for chin detection)
+            if (results.faceLandmarks) {
+                drawFaceLandmarks(ctx, results.faceLandmarks, canvas.width, canvas.height);
+            }
+            
             // Draw hand skeleton with colored connections and joints
             drawHandConnections(ctx, landmarks, canvas.width, canvas.height);
             drawHandLandmarks(ctx, landmarks, canvas.width, canvas.height);
@@ -143,8 +153,38 @@ class ASLGestureApp {
             if (this.ui.getMode() === 'detect') {
                 // Detection mode: recognize gesture and show confidence
                 const detection = this.training.detectGestureWithConfidence(landmarks);
-                drawBoundingBox(ctx, boundingBox, detection.gesture);
-                this.ui.updateGestureResult(detection.gesture, detection.confidence);
+                
+                // Check for motion-based gestures
+                let finalGesture = detection.gesture;
+                let motionFeedback = null;
+                
+                // Check for Thank You motion on open hand gesture
+                if (detection.gesture === GESTURES.HELLO) {
+                    const motionResult = this.motion.detectThankYouMotion(landmarks, results.faceLandmarks);
+                    if (motionResult.detected) {
+                        // Only show Thank You when motion is completed
+                        finalGesture = GESTURES.THANK_YOU;
+                        detection.confidence = motionResult.confidence;
+                    } else if (motionResult.phase === 'started') {
+                        // While in motion, show feedback but keep as Hello
+                        motionFeedback = this.motion.getMotionFeedback('Thank You');
+                    }
+                    // Otherwise keep it as Hello
+                }
+                
+                // If static gesture is Yes (fist), check for knocking motion
+                if (detection.gesture === GESTURES.YES) {
+                    const motionResult = this.motion.detectYesMotion(landmarks, results.faceLandmarks);
+                    if (motionResult.detected) {
+                        finalGesture = GESTURES.YES + ' (Motion Completed)';
+                        detection.confidence = motionResult.confidence;
+                    } else {
+                        motionFeedback = this.motion.getMotionFeedback('Yes');
+                    }
+                }
+                
+                drawBoundingBox(ctx, boundingBox, finalGesture);
+                this.ui.updateGestureResult(finalGesture, detection.confidence, motionFeedback);
             } else {
                 // Training mode: show selected gesture for capture
                 drawBoundingBox(ctx, boundingBox, 'Training Mode');
@@ -154,9 +194,10 @@ class ASLGestureApp {
                 }
             }
         } else {
-            // No hand detected - clear gesture display
+            // No hand detected - clear gesture display and reset motion tracker
             this.currentLandmarks = null;
             this.ui.updateGestureResult(null);
+            this.motion.reset();
         }
         
         // Restore canvas context state
