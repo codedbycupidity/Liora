@@ -3,7 +3,7 @@
 
 // Import all necessary modules
 import { GESTURES } from './modules/gestures.js';
-import { drawHandConnections, drawHandLandmarks, getBoundingBox, drawBoundingBox, drawFaceLandmarks } from './modules/visualization.js';
+import { drawHandConnections, drawHandLandmarks, getBoundingBox, drawBoundingBox } from './modules/visualization.js';
 import { TrainingManager } from './modules/training.js';
 import { UIManager } from './modules/ui.js';
 import { CameraManager } from './modules/camera.js';
@@ -27,6 +27,14 @@ class ASLGestureApp {
         
         // Store current hand landmarks for gesture detection
         this.currentLandmarks = null;
+        
+        // Gesture display timing
+        this.lastGesture = GESTURES.NONE;
+        this.gestureStartTime = 0;
+        this.minDisplayTime = {
+            [GESTURES.YES]: 1000,  // 1 second minimum for Yes
+            default: 0  // No minimum for other gestures
+        };
         
         // Connect UI events to app methods
         this.setupEventHandlers();
@@ -137,11 +145,6 @@ class ASLGestureApp {
             // Add current frame to motion tracker with face landmarks if available
             this.motion.addFrame(landmarks, results.faceLandmarks);
             
-            // Draw face landmarks if available (for chin detection)
-            if (results.faceLandmarks) {
-                drawFaceLandmarks(ctx, results.faceLandmarks, canvas.width, canvas.height);
-            }
-            
             // Draw hand skeleton with colored connections and joints
             drawHandConnections(ctx, landmarks, canvas.width, canvas.height);
             drawHandLandmarks(ctx, landmarks, canvas.width, canvas.height);
@@ -158,29 +161,73 @@ class ASLGestureApp {
                 let finalGesture = detection.gesture;
                 let motionFeedback = null;
                 
-                // Check for Thank You motion on open hand gesture
+                // Check for motion-based gestures on open hand
                 if (detection.gesture === GESTURES.HELLO) {
-                    const motionResult = this.motion.detectThankYouMotion(landmarks, results.faceLandmarks);
-                    if (motionResult.detected) {
+                    // First check for Thank You motion (chin to forward/down)
+                    const thankYouResult = this.motion.detectThankYouMotion(landmarks, results.faceLandmarks);
+                    
+                    if (thankYouResult.detected) {
                         // Only show Thank You when motion is completed
                         finalGesture = GESTURES.THANK_YOU;
-                        detection.confidence = motionResult.confidence;
-                    } else if (motionResult.phase === 'started') {
-                        // While in motion, show feedback but keep as Hello
+                        detection.confidence = thankYouResult.confidence;
+                    } else if (thankYouResult.phase === 'started') {
+                        // While in Thank You motion, show feedback
                         motionFeedback = this.motion.getMotionFeedback('Thank You');
+                    } else {
+                        // If not doing Thank You, check for Hello wave motion
+                        const helloResult = this.motion.detectHelloMotion(landmarks);
+                        
+                        if (helloResult.detected) {
+                            // Only show Hello when wave is completed
+                            finalGesture = GESTURES.HELLO;
+                            detection.confidence = helloResult.confidence;
+                        } else if (helloResult.phase === 'waving') {
+                            // While waving, show feedback
+                            motionFeedback = this.motion.getMotionFeedback('Hello');
+                        }
+                        // If not waving or doing Thank You, just keep showing previous gesture
                     }
-                    // Otherwise keep it as Hello
                 }
                 
                 // If static gesture is Yes (fist), check for knocking motion
                 if (detection.gesture === GESTURES.YES) {
                     const motionResult = this.motion.detectYesMotion(landmarks, results.faceLandmarks);
                     if (motionResult.detected) {
-                        finalGesture = GESTURES.YES + ' (Motion Completed)';
+                        // Only show Yes when knocking motion is completed
+                        finalGesture = GESTURES.YES;
                         detection.confidence = motionResult.confidence;
-                    } else {
+                    } else if (motionResult.phase === 'tracking') {
+                        // While knocking, show feedback but clear gesture
+                        finalGesture = GESTURES.NONE;
                         motionFeedback = this.motion.getMotionFeedback('Yes');
+                    } else {
+                        // Just a static fist, don't show anything
+                        finalGesture = GESTURES.NONE;
                     }
+                }
+                
+                // Check if we need to enforce minimum display time
+                const now = Date.now();
+                const minTime = this.minDisplayTime[this.lastGesture] || this.minDisplayTime.default;
+                const timeSinceChange = now - this.gestureStartTime;
+                
+                // If no gesture detected, keep showing the last gesture
+                if (finalGesture === GESTURES.NONE && this.lastGesture !== GESTURES.NONE) {
+                    finalGesture = this.lastGesture;
+                } else if (this.lastGesture !== finalGesture && this.lastGesture !== GESTURES.NONE) {
+                    // If the gesture is changing and we haven't met minimum display time, keep showing last gesture
+                    if (timeSinceChange < minTime) {
+                        // Keep showing the previous gesture
+                        finalGesture = this.lastGesture;
+                    } else {
+                        // Enough time has passed, allow the change
+                        this.lastGesture = finalGesture;
+                        this.gestureStartTime = now;
+                    }
+                } else if (this.lastGesture !== finalGesture && finalGesture !== GESTURES.NONE) {
+                    // First time showing this gesture (not None)
+                    this.lastGesture = finalGesture;
+                    this.gestureStartTime = now;
                 }
                 
                 drawBoundingBox(ctx, boundingBox, finalGesture);
@@ -194,10 +241,13 @@ class ASLGestureApp {
                 }
             }
         } else {
-            // No hand detected - clear gesture display and reset motion tracker
+            // No hand detected - keep showing last gesture but reset motion tracker
             this.currentLandmarks = null;
-            this.ui.updateGestureResult(null);
             this.motion.reset();
+            // Keep showing the last gesture if there was one
+            if (this.lastGesture && this.lastGesture !== GESTURES.NONE) {
+                this.ui.updateGestureResult(this.lastGesture);
+            }
         }
         
         // Restore canvas context state

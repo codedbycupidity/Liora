@@ -4,17 +4,23 @@ A web-based application that uses your camera to detect and recognize multiple A
 
 ## Features
 
-- Real-time hand tracking using MediaPipe with 21 landmark points
+- Real-time hand tracking using MediaPipe Holistic (face, pose, and hands)
 - Color-coded finger visualization:
   - Thumb: Red
   - Index: Teal
   - Middle: Blue
   - Ring: Yellow
   - Pinky: Purple
-- Motion tracking for movement-based gestures (Yes, Thank You)
+- Motion tracking for movement-based gestures:
+  - **Thank You**: Tracks hand movement from chin forward/down
+  - **Yes**: Detects up/down knocking motion with fist
+  - **Hello**: Detects side-to-side waving motion
+- Face tracking for accurate chin position detection (Thank You gesture)
+- Gesture persistence - last gesture stays displayed until new one detected
+- Minimum display time for motion gestures (prevents rapid switching)
 - Machine learning training mode to improve accuracy with your hand gestures
 - Confidence meter showing detection accuracy
-- Visual feedback for motion gestures
+- Visual feedback during motion gestures
 - Bounding box with gesture labels
 - Automatic loading of training data from previous sessions
 - Export/import training data for backup and sharing
@@ -24,10 +30,11 @@ A web-based application that uses your camera to detect and recognize multiple A
 ## Supported Gestures
 
 ### 1. **Hello** 👋
-- **Hand Position**: Open palm facing forward
+- **Hand Position**: Open palm
 - **Fingers**: All fingers extended and spread apart
-- **Palm**: Facing the camera
-- **Movement**: Can add a gentle wave motion
+- **Movement**: Wave side to side (1+ waves)
+- **Motion Detection**: Tracks horizontal movement (left-right)
+- **Note**: Only shows "Hello" after completing wave motion
 
 ### 2. **I Love You** 🤟
 - **Hand Position**: Face palm forward
@@ -40,24 +47,27 @@ A web-based application that uses your camera to detect and recognize multiple A
 - **Note**: Forms the letters I, L, and Y simultaneously
 
 ### 3. **Good/Thumbs Up** 👍
-- **Hand Position**: Fist with thumb up
-- **Fingers**: All fingers folded into palm
-- **Thumb**: Extended upward
-- **Orientation**: Thumb pointing to the sky
+- **Hand Position**: Fist with thumb clearly extended upward
+- **Fingers**: All fingers tightly folded into palm
+- **Thumb**: Fully extended upward and away from fist
+- **Orientation**: Thumb must be significantly above the hand base
+- **Note**: Requires clear thumb extension to distinguish from a regular fist
 
 ### 4. **Bad/Thumbs Down** 👎
-- **Hand Position**: Fist with thumb down
-- **Fingers**: All fingers folded into palm
-- **Thumb**: Extended downward
-- **Orientation**: Thumb pointing to the ground
+- **Hand Position**: Fist with thumb clearly extended downward
+- **Fingers**: All fingers tightly folded into palm
+- **Thumb**: Fully extended downward and away from fist
+- **Orientation**: Thumb must be significantly below the hand base
+- **Note**: Requires clear thumb extension to distinguish from a regular fist
 
 ### 5. **Yes** ✊
-- **Hand Position**: Closed fist (works in any orientation)
-- **Fingers**: All fingers and thumb folded tightly
-- **Thumb**: Can be wrapped around fingers or tucked to the side
+- **Hand Position**: Closed fist
+- **Fingers**: All fingers folded tightly into palm
+- **Thumb**: Must be folded close to fingers (not extended)
 - **Movement**: Up and down knocking motion (2+ bounces)
-- **Motion Detection**: Tracks vertical movement and counts bounces
-- **Note**: Detects both static fist and knocking motion
+- **Motion Detection**: Only displays when knocking motion is completed
+- **Display Duration**: Shows for 1 second minimum after motion detected
+- **Note**: Static fist alone will not trigger - requires knocking motion
 
 ### 6. **I/I'm/Me** ☝️
 - **Hand Position**: Pointing to self
@@ -84,11 +94,11 @@ A web-based application that uses your camera to detect and recognize multiple A
 - **Shape**: Forms an "O" with thumb and index
 
 ### 9. **Thank You** 🙏
-- **Hand Position**: Open hand starting at chin level
+- **Hand Position**: Open hand at chin
 - **Fingers**: All fingers extended (flat hand)
 - **Movement**: Hand moves forward and down from chin
-- **Motion Detection**: Tracks hand starting at chin and moving forward/down
-- **Note**: Requires both correct hand position and forward motion
+- **Motion Detection**: Uses face tracking to detect actual chin position
+- **Note**: Requires face to be visible for accurate chin detection
 
 ## How to Run
 
@@ -181,7 +191,6 @@ The app uses MediaPipe Holistic for comprehensive tracking:
 - Bounding box calculated from min/max landmark coordinates
 - Colored connections show hand skeleton structure
 - Each finger has a unique color for easy identification
-- Chin position highlighted in gold for "Thank You" gesture reference
 
 ### Gesture Recognition
 1. **Rule-based detection**: Primary detection using geometric analysis of hand landmarks
