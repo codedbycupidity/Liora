@@ -28,9 +28,9 @@ export function detectGesture(landmarks) {
     // More specific gestures (like I Love You) are checked before general ones (like Hello)
     if (isILoveYouGesture(landmarks)) return GESTURES.I_LOVE_YOU;
     if (isOkayGesture(landmarks)) return GESTURES.OKAY;
+    if (isYesGesture(landmarks)) return GESTURES.YES;  // Check fist before thumbs up
     if (isGoodGesture(landmarks)) return GESTURES.GOOD;
     if (isBadGesture(landmarks)) return GESTURES.BAD;
-    if (isYesGesture(landmarks)) return GESTURES.YES;
     if (isIGesture(landmarks)) return GESTURES.I_ME;
     if (isNoGesture(landmarks)) return GESTURES.NO;
     if (isThankYouGesture(landmarks)) return GESTURES.THANK_YOU;
@@ -73,9 +73,9 @@ function isILoveYouGesture(landmarks) {
 }
 
 /**
- * Detect "Hello" gesture
- * Open palm with all fingers extended, palm facing forward
- * Common greeting gesture
+ * Detect open hand (base for Hello and Thank You)
+ * Open palm with all fingers extended
+ * Used as starting position for motion-based gestures
  */
 function isHelloGesture(landmarks) {
     // Get wrist position for palm orientation
@@ -114,6 +114,7 @@ function isGoodGesture(landmarks) {
     const thumbTip = landmarks[4];   // Thumb tip
     const thumbIP = landmarks[3];    // Thumb interphalangeal joint
     const thumbMCP = landmarks[2];   // Thumb metacarpophalangeal joint
+    const wrist = landmarks[0];
     
     // Get finger tip and base positions
     const indexTip = landmarks[8];
@@ -125,16 +126,40 @@ function isGoodGesture(landmarks) {
     const pinkyTip = landmarks[20];
     const pinkyMCP = landmarks[17];  // Pinky metacarpophalangeal joint
     
-    // Thumb up: tip is above both joints (lower y values)
-    const thumbUp = thumbTip.y < thumbIP.y && thumbTip.y < thumbMCP.y;
+    // For thumbs up, thumb must be VERY clearly extended
+    const thumbDistFromPalm = Math.sqrt(
+        Math.pow(thumbTip.x - middleMCP.x, 2) + 
+        Math.pow(thumbTip.y - middleMCP.y, 2)
+    );
     
-    // All other fingers folded: tips below knuckles (higher y values)
+    // Calculate thumb extension from its base
+    const thumbLength = Math.sqrt(
+        Math.pow(thumbTip.x - thumbMCP.x, 2) + 
+        Math.pow(thumbTip.y - thumbMCP.y, 2)
+    );
+    
+    // Strict requirements:
+    // 1. Thumb must be far from palm center
+    const thumbExtended = thumbDistFromPalm > 0.2;
+    
+    // 2. Thumb must be fully extended from its base
+    const thumbFullyExtended = thumbLength > 0.12;
+    
+    // 3. Thumb must be clearly pointing up (much higher than base)
+    const thumbPointingUp = thumbTip.y < thumbMCP.y - 0.08;
+    
+    // 4. Thumb should also be higher than the wrist
+    const thumbAboveWrist = thumbTip.y < wrist.y - 0.05;
+    
+    // Check if ALL other fingers are tightly folded
     const indexFolded = indexTip.y > indexMCP.y;
     const middleFolded = middleTip.y > middleMCP.y;
     const ringFolded = ringTip.y > ringMCP.y;
     const pinkyFolded = pinkyTip.y > pinkyMCP.y;
     
-    return thumbUp && indexFolded && middleFolded && ringFolded && pinkyFolded;
+    // All conditions must be true
+    return thumbExtended && thumbFullyExtended && thumbPointingUp && thumbAboveWrist &&
+           indexFolded && middleFolded && ringFolded && pinkyFolded;
 }
 
 /**
@@ -146,6 +171,7 @@ function isBadGesture(landmarks) {
     const thumbTip = landmarks[4];
     const thumbIP = landmarks[3];
     const thumbMCP = landmarks[2];
+    const wrist = landmarks[0];
     
     // Get finger positions
     const indexTip = landmarks[8];
@@ -157,16 +183,40 @@ function isBadGesture(landmarks) {
     const pinkyTip = landmarks[20];
     const pinkyMCP = landmarks[17];
     
-    // Thumb down: tip is below both joints (higher y values)
-    const thumbDown = thumbTip.y > thumbIP.y && thumbTip.y > thumbMCP.y;
+    // For thumbs down, thumb must be VERY clearly extended downward
+    const thumbDistFromPalm = Math.sqrt(
+        Math.pow(thumbTip.x - middleMCP.x, 2) + 
+        Math.pow(thumbTip.y - middleMCP.y, 2)
+    );
     
-    // All other fingers folded
+    // Calculate thumb extension from its base
+    const thumbLength = Math.sqrt(
+        Math.pow(thumbTip.x - thumbMCP.x, 2) + 
+        Math.pow(thumbTip.y - thumbMCP.y, 2)
+    );
+    
+    // Strict requirements:
+    // 1. Thumb must be far from palm center
+    const thumbExtended = thumbDistFromPalm > 0.2;
+    
+    // 2. Thumb must be fully extended from its base
+    const thumbFullyExtended = thumbLength > 0.12;
+    
+    // 3. Thumb must be clearly pointing down (much lower than base)
+    const thumbPointingDown = thumbTip.y > thumbMCP.y + 0.08;
+    
+    // 4. Thumb should also be lower than the wrist
+    const thumbBelowWrist = thumbTip.y > wrist.y + 0.05;
+    
+    // Check if ALL other fingers are tightly folded
     const indexFolded = indexTip.y > indexMCP.y;
     const middleFolded = middleTip.y > middleMCP.y;
     const ringFolded = ringTip.y > ringMCP.y;
     const pinkyFolded = pinkyTip.y > pinkyMCP.y;
     
-    return thumbDown && indexFolded && middleFolded && ringFolded && pinkyFolded;
+    // All conditions must be true
+    return thumbExtended && thumbFullyExtended && thumbPointingDown && thumbBelowWrist &&
+           indexFolded && middleFolded && ringFolded && pinkyFolded;
 }
 
 /**
@@ -176,41 +226,37 @@ function isBadGesture(landmarks) {
  * Works with fist in any orientation
  */
 function isYesGesture(landmarks) {
-    // Get all necessary landmarks
+    // Fist detection that excludes thumbs up/down
     const thumbTip = landmarks[4];
     const thumbMCP = landmarks[2];
-    const thumbIP = landmarks[3];
     const indexTip = landmarks[8];
     const indexMCP = landmarks[5];
-    const indexPIP = landmarks[6];
     const middleTip = landmarks[12];
     const middleMCP = landmarks[9];
     const ringTip = landmarks[16];
-    const ringMCP = landmarks[13];
     const pinkyTip = landmarks[20];
-    const pinkyMCP = landmarks[17];
+    const palmBase = landmarks[9]; // Middle finger MCP
     
-    // Check if thumb is folded (either wrapped around fingers or tucked to side)
-    // Calculate distance between thumb tip and index knuckle (typical fist position)
-    const thumbToIndexDistance = Math.sqrt(
-        Math.pow(thumbTip.x - indexMCP.x, 2) + 
-        Math.pow(thumbTip.y - indexMCP.y, 2)
+    // Check if thumb is truly folded (not extended like in thumbs up/down)
+    // For a proper fist, thumb should be close to the palm
+    const thumbDistFromPalm = Math.sqrt(
+        Math.pow(thumbTip.x - middleMCP.x, 2) + 
+        Math.pow(thumbTip.y - middleMCP.y, 2)
     );
     
-    // Thumb is considered folded if:
-    // 1. Close to index knuckle (wrapped around fingers)
-    // 2. OR close to its base (tucked to side)
-    const thumbFolded = thumbToIndexDistance < 0.15 || 
-                       (Math.abs(thumbTip.y - thumbMCP.y) < 0.1 && Math.abs(thumbTip.x - thumbMCP.x) < 0.1);
+    // Thumb must be close to palm (not extended for thumbs up/down)
+    const thumbFolded = thumbDistFromPalm < 0.08;
     
-    // All fingers must be folded down
-    // Small threshold for index finger to handle slight variations
-    const indexFolded = indexTip.y > indexPIP.y - 0.02;
-    const middleFolded = middleTip.y > middleMCP.y;
-    const ringFolded = ringTip.y > ringMCP.y;
-    const pinkyFolded = pinkyTip.y > pinkyMCP.y;
+    // All fingers should be folded
+    const indexFolded = indexTip.y > indexMCP.y - 0.02;
+    const middleFolded = middleTip.y > middleMCP.y - 0.02;
+    const ringFolded = ringTip.y > middleMCP.y - 0.02;
+    const pinkyFolded = pinkyTip.y > middleMCP.y - 0.02;
     
-    return thumbFolded && indexFolded && middleFolded && ringFolded && pinkyFolded;
+    // Also check that fingers are relatively close together (making a fist)
+    const fingersClose = Math.abs(indexTip.x - pinkyTip.x) < 0.2;
+    
+    return thumbFolded && indexFolded && middleFolded && ringFolded && pinkyFolded && fingersClose;
 }
 
 /**
