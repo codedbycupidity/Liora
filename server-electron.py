@@ -1,33 +1,49 @@
 #!/usr/bin/env python3
 """
-Simple server for ASL Gesture App with training data saving capability
-Provides endpoints for loading and saving training data to disk
-Run with: python3 server.py
+Electron-compatible server for ASL Gesture App
+Handles training data in the user's app data directory
 """
 
 import os
 import json
 import http.server
 import socketserver
+import sys
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
 # Configuration
 PORT = 8000
-TRAINING_DATA_DIR = "training-data"  # Directory to store training samples
+
+# Determine the correct directory for training data
+if hasattr(sys, '_MEIPASS'):
+    # Running as a bundled exe
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Running as a script
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# For Electron, we want to use the app's user data directory
+# This will be passed as an argument or use current directory as fallback
+if len(sys.argv) > 1:
+    TRAINING_DATA_DIR = os.path.join(sys.argv[1], "training-data")
+else:
+    TRAINING_DATA_DIR = os.path.join(BASE_DIR, "training-data")
 
 class ASLRequestHandler(http.server.SimpleHTTPRequestHandler):
     """
-    Custom request handler extending SimpleHTTPRequestHandler
-    Adds API endpoints for training data management
+    Custom request handler for Electron app
     """
+    
+    def __init__(self, *args, **kwargs):
+        # Set the directory to serve files from
+        super().__init__(*args, directory=BASE_DIR, **kwargs)
     
     def do_GET(self):
         """Handle GET requests"""
         if self.path == '/api/training-data/load':
             # API endpoint to load all training data from disk
             try:
-                # Collect all training data from the training-data directory
                 all_training_data = {}
                 
                 if os.path.exists(TRAINING_DATA_DIR):
@@ -36,7 +52,7 @@ class ASLRequestHandler(http.server.SimpleHTTPRequestHandler):
                         gesture_path = os.path.join(TRAINING_DATA_DIR, gesture_folder)
                         
                         if os.path.isdir(gesture_path):
-                            # Convert folder name back to gesture name (underscore to slash)
+                            # Convert folder name back to gesture name
                             gesture_name = gesture_folder.replace('_', '/')
                             all_training_data[gesture_name] = []
                             
@@ -47,16 +63,15 @@ class ASLRequestHandler(http.server.SimpleHTTPRequestHandler):
                                     try:
                                         with open(filepath, 'r') as f:
                                             data = json.load(f)
-                                            # Extract landmarks array from saved data
                                             if 'landmarks' in data:
                                                 all_training_data[gesture_name].append(data['landmarks'])
                                     except Exception as e:
                                         print(f"Error reading {filepath}: {e}")
                 
-                # Send successful response with training data
+                # Send successful response
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')  # CORS header
+                self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(json.dumps(all_training_data).encode())
                 
@@ -68,7 +83,7 @@ class ASLRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({'error': str(e)}).encode())
         else:
-            # Default file serving for static files
+            # Default file serving
             super().do_GET()
     
     def do_POST(self):
@@ -79,22 +94,19 @@ class ASLRequestHandler(http.server.SimpleHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             
             try:
-                # Parse JSON data from request
+                # Parse JSON data
                 data = json.loads(post_data)
                 gesture = data.get('gesture', 'unknown')
                 timestamp = data.get('timestamp', datetime.now().isoformat())
                 
-                # Create gesture directory if it doesn't exist
-                # Replace slash with underscore for filesystem compatibility
+                # Create directories if they don't exist
                 gesture_dir = os.path.join(TRAINING_DATA_DIR, gesture.replace('/', '_'))
                 os.makedirs(gesture_dir, exist_ok=True)
                 
-                # Save the sample with timestamp in filename
-                # Replace colons in timestamp for filesystem compatibility
+                # Save the sample
                 filename = f"{gesture}_{timestamp.replace(':', '-')}.json"
                 filepath = os.path.join(gesture_dir, filename)
                 
-                # Write JSON data to file with pretty formatting
                 with open(filepath, 'w') as f:
                     json.dump(data, f, indent=2)
                 
@@ -124,17 +136,37 @@ class ASLRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
+    
+    def log_message(self, format, *args):
+        """Override to suppress logs in production"""
+        if '--verbose' in sys.argv:
+            super().log_message(format, *args)
 
 if __name__ == "__main__":
     # Create training data directory if it doesn't exist
     os.makedirs(TRAINING_DATA_DIR, exist_ok=True)
     
-    # Set up and start the server
-    Handler = ASLRequestHandler
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print(f"Server running at http://localhost:{PORT}/")
-        print(f"Training data will be saved to: {os.path.abspath(TRAINING_DATA_DIR)}/")
-        print("Press Ctrl-C to stop")
-        
-        # Run server until interrupted
-        httpd.serve_forever()
+    # Try to find an available port if default is taken
+    port = PORT
+    max_attempts = 10
+    
+    for attempt in range(max_attempts):
+        try:
+            # Set up and start the server
+            Handler = ASLRequestHandler
+            with socketserver.TCPServer(("", port), Handler) as httpd:
+                print(f"Server running at http://localhost:{port}/")
+                print(f"Training data directory: {os.path.abspath(TRAINING_DATA_DIR)}")
+                print("Ready for connections...")
+                sys.stdout.flush()  # Ensure output is sent to Electron
+                
+                # Run server until interrupted
+                httpd.serve_forever()
+                break
+        except OSError as e:
+            if e.errno == 48:  # Address already in use
+                port += 1
+                if attempt < max_attempts - 1:
+                    print(f"Port {port-1} in use, trying {port}...")
+                    continue
+            raise

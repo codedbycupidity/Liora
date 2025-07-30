@@ -82,7 +82,40 @@ A web-based application that uses your camera to detect and recognize multiple A
 
 ## How to Run
 
-### Basic Setup (View Only)
+### Desktop App (Electron)
+
+#### Installation
+```bash
+# Install dependencies
+npm install
+
+# Run in development mode
+npm start
+
+# Or with developer tools open
+npm run dev
+```
+
+#### Building the Desktop App
+```bash
+# Build for your current platform
+npm run build
+
+# Build for specific platforms
+npm run build-mac    # macOS
+npm run build-win    # Windows  
+npm run build-linux  # Linux
+
+# The built app will be in the 'dist' folder
+```
+
+#### Features in Desktop Mode
+- Native file dialogs for import/export
+- Menu bar with keyboard shortcuts
+- Training data stored in app data folder
+- Runs without external dependencies
+
+### Web Browser Setup
 1. Navigate to the project directory:
    ```bash
    cd asl-gesture-app
