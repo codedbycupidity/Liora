@@ -1,0 +1,11 @@
+# Icon Placeholder
+
+Please add your application icon here as icon.png (512x512 pixels recommended).
+
+For macOS: Also provide icon.icns
+For Windows: Also provide icon.ico
+
+You can use tools like:
+- https://www.npmjs.com/package/electron-icon-builder
+- https://cloudconvert.com/png-to-icns
+- https://icoconvert.com/

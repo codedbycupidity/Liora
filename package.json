@@ -1,0 +1,83 @@
+{
+  "name": "asl-gesture-recognition",
+  "version": "1.0.0",
+  "description": "ASL Gesture Recognition Desktop App - Learn American Sign Language with real-time hand tracking",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build-mac": "electron-builder --mac",
+    "build-win": "electron-builder --win",
+    "build-linux": "electron-builder --linux",
+    "dist": "electron-builder --publish=never",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [
+    "asl",
+    "sign-language",
+    "gesture-recognition",
+    "mediapipe",
+    "electron",
+    "machine-learning"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "electron-localshortcut": "^3.2.1"
+  },
+  "build": {
+    "appId": "com.yourcompany.asl-gesture-app",
+    "productName": "ASL Gesture Recognition",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!**/*.ts",
+      "!*.code-workspace",
+      "!dist",
+      "!.git",
+      "!.github",
+      "!.vscode",
+      "!node_modules/.cache",
+      "!training-data/**"
+    ],
+    "extraResources": [
+      {
+        "from": "server-electron.py",
+        "to": "server-electron.py"
+      },
+      {
+        "from": "server.py",
+        "to": "server.py"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Education",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true
+    }
+  }
+}
