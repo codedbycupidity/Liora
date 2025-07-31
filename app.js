@@ -62,12 +62,10 @@ class ASLGestureApp {
         if (totalSamples > 0) {
             console.log(`Loaded ${totalSamples} training samples from previous sessions`);
             this.ui.updateStatus(`Ready - Loaded ${totalSamples} training samples`);
-            
-            // Reset status message after 3 seconds
-            setTimeout(() => {
-                this.ui.updateStatus('Click "Start Camera" to begin');
-            }, 3000);
         }
+        
+        // Automatically start the camera
+        await this.startCamera();
     }
 
     /**
@@ -75,9 +73,6 @@ class ASLGestureApp {
      * Connects UI events to appropriate handler methods
      */
     setupEventHandlers() {
-        // Camera start button clicked
-        this.ui.on('onStartCamera', () => this.startCamera());
-        
         // Mode switch between detect and train
         this.ui.on('onModeChange', (mode) => this.handleModeChange(mode));
         
@@ -97,8 +92,6 @@ class ASLGestureApp {
      * Handles permissions and error states
      */
     async startCamera() {
-        // Disable button to prevent multiple clicks
-        this.ui.disableStartButton();
         this.ui.updateStatus('Initializing camera...', 'loading');
         
         try {
@@ -109,7 +102,6 @@ class ASLGestureApp {
             // Handle camera permission errors
             console.error('Error starting camera:', error);
             this.ui.updateStatus('Error: Could not access camera. Please check permissions.', 'error');
-            this.ui.enableStartButton();
         }
     }
 

@@ -13,7 +13,6 @@ export class UIManager {
         this.elements = {
             statusText: document.getElementById('statusText'),          // Status messages
             gestureResult: document.getElementById('gestureResult'),    // Detected gesture display
-            startButton: document.getElementById('startButton'),        // Camera start button
             modeToggle: document.getElementById('modeToggle'),          // Mode toggle switch
             trainingPanel: document.getElementById('trainingPanel'),    // Training controls panel
             captureBtn: document.getElementById('captureBtn'),          // Capture sample button
@@ -140,13 +139,6 @@ export class UIManager {
      * Uses callback pattern for communication with app
      */
     setupEventListeners() {
-        // Camera start button
-        this.elements.startButton.addEventListener('click', () => {
-            if (this.callbacks.onStartCamera) {
-                this.callbacks.onStartCamera();
-            }
-        });
-
         // Mode toggle switch
         this.elements.modeToggle.addEventListener('change', (e) => {
             const mode = e.target.checked ? 'train' : 'detect';
@@ -204,20 +196,6 @@ export class UIManager {
      */
     on(event, callback) {
         this.callbacks[event] = callback;
-    }
-
-    /**
-     * Disable camera start button
-     */
-    disableStartButton() {
-        this.elements.startButton.disabled = true;
-    }
-
-    /**
-     * Enable camera start button
-     */
-    enableStartButton() {
-        this.elements.startButton.disabled = false;
     }
 
     /**
