@@ -265,9 +265,12 @@ function isYesGesture(landmarks) {
  * Used to indicate self in ASL
  */
 function isIGesture(landmarks) {
-    // Get finger positions
+    // Get finger positions including thumb
+    const thumbTip = landmarks[4];
+    const thumbMCP = landmarks[2];
     const indexTip = landmarks[8];
     const indexPIP = landmarks[6];
+    const indexMCP = landmarks[5];
     const middleTip = landmarks[12];
     const middleMCP = landmarks[9];
     const ringTip = landmarks[16];
@@ -275,8 +278,15 @@ function isIGesture(landmarks) {
     const pinkyTip = landmarks[20];
     const pinkyMCP = landmarks[17];
     
-    // Index finger extended upward
-    const indexExtended = indexTip.y < indexPIP.y;
+    // Check thumb is folded (not sticking out)
+    const thumbDistFromIndex = Math.sqrt(
+        Math.pow(thumbTip.x - indexMCP.x, 2) + 
+        Math.pow(thumbTip.y - indexMCP.y, 2)
+    );
+    const thumbFolded = thumbDistFromIndex < 0.15;
+    
+    // Index finger extended upward - more strict
+    const indexExtended = indexTip.y < indexPIP.y - 0.05;
     
     // All other fingers folded
     const middleFolded = middleTip.y > middleMCP.y;
@@ -287,7 +297,11 @@ function isIGesture(landmarks) {
     // Small x-axis difference between tip and joint indicates vertical orientation
     const indexPointingUp = Math.abs(indexTip.x - indexPIP.x) < 0.05;
     
-    return indexExtended && middleFolded && ringFolded && pinkyFolded && indexPointingUp;
+    // Index should be clearly extended from the hand
+    const indexClearlyExtended = (indexPIP.y - indexTip.y) > 0.08;
+    
+    return thumbFolded && indexExtended && middleFolded && ringFolded && pinkyFolded && 
+           indexPointingUp && indexClearlyExtended;
 }
 
 
@@ -301,30 +315,37 @@ function isNoGesture(landmarks) {
     const thumbTip = landmarks[4];
     const indexTip = landmarks[8];
     const indexPIP = landmarks[6];
+    const indexMCP = landmarks[5];
     const middleTip = landmarks[12];
     const middlePIP = landmarks[10];
+    const middleMCP = landmarks[9];
     const ringTip = landmarks[16];
     const ringMCP = landmarks[13];
     const pinkyTip = landmarks[20];
     const pinkyMCP = landmarks[17];
     
-    // Index and middle fingers extended
-    const indexExtended = indexTip.y < indexPIP.y;
-    const middleExtended = middleTip.y < middlePIP.y;
+    // Index and middle fingers must be clearly extended
+    const indexExtended = indexTip.y < indexPIP.y - 0.05;
+    const middleExtended = middleTip.y < middlePIP.y - 0.05;
+    
+    // Check fingers are properly extended from their base
+    const indexClearlyExtended = indexTip.y < indexMCP.y - 0.1;
+    const middleClearlyExtended = middleTip.y < middleMCP.y - 0.1;
     
     // Ring and pinky folded
     const ringFolded = ringTip.y > ringMCP.y;
     const pinkyFolded = pinkyTip.y > pinkyMCP.y;
     
     // Check if index and middle fingers are close together
-    const fingersClose = Math.abs(indexTip.x - middleTip.x) < 0.05;
+    const fingersClose = Math.abs(indexTip.x - middleTip.x) < 0.08;
     
-    // Also check if fingers might be touching thumb (tapping motion)
-    const touchingThumb = Math.abs(indexTip.x - thumbTip.x) < 0.1 && 
-                         Math.abs(indexTip.y - thumbTip.y) < 0.1;
+    // Both fingers should be roughly parallel (similar angles)
+    const indexAngle = Math.atan2(indexTip.y - indexPIP.y, indexTip.x - indexPIP.x);
+    const middleAngle = Math.atan2(middleTip.y - middlePIP.y, middleTip.x - middlePIP.x);
+    const fingersParallel = Math.abs(indexAngle - middleAngle) < 0.3;
     
-    return indexExtended && middleExtended && ringFolded && pinkyFolded && 
-           (fingersClose || touchingThumb);
+    return indexExtended && middleExtended && indexClearlyExtended && middleClearlyExtended &&
+           ringFolded && pinkyFolded && fingersClose && fingersParallel;
 }
 
 /**

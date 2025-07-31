@@ -19,12 +19,11 @@ const isDev = process.argv.includes('--dev');
  * Create the main application window
  */
 function createWindow() {
-    // Create the browser window
+    // Create the browser window with Photo Booth-like dimensions
     mainWindow = new BrowserWindow({
-        width: 1400,
-        height: 900,
-        minWidth: 1000,
-        minHeight: 700,
+        width: 860,      // Photo Booth default width
+        height: 640,     // Photo Booth default height
+        resizable: false, // Fixed size like Photo Booth
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -32,7 +31,11 @@ function createWindow() {
         },
         icon: path.join(__dirname, 'assets', 'icon.png'),
         titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-        backgroundColor: '#f8f9fa'
+        backgroundColor: '#ffffff',
+        // Make window stay on top (optional, Photo Booth doesn't do this by default)
+        // alwaysOnTop: true,
+        // Center the window on screen
+        center: true
     });
 
     // Load the index.html file
