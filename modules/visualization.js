@@ -5,14 +5,14 @@
  */
 
 // Color scheme for different parts of the hand
-// Each finger has a unique color for easy identification
+// Soft pastel colors with better visibility
 export const FINGER_COLORS = {
-    thumb: '#FF6B6B',      // Red - easily distinguishable
-    index: '#4ECDC4',      // Teal - pointing finger
-    middle: '#45B7D1',     // Blue - middle finger
-    ring: '#F7DC6F',       // Yellow - ring finger
-    pinky: '#BB8FCE',      // Purple - smallest finger
-    palm: '#52BE80',       // Green - palm connections
+    thumb: '#FF8FA3',      // Soft Pink/Red
+    index: '#8FDDBC',      // Soft Mint Green
+    middle: '#8FC9FF',     // Soft Sky Blue
+    ring: '#FFE66D',       // Soft Yellow
+    pinky: '#D4A5D9',      // Soft Lavender
+    palm: '#A8B5E0',       // Soft Periwinkle - palm connections
     wrist: '#FFFFFF'       // White - wrist landmark
 };
 
@@ -164,13 +164,13 @@ export function getBoundingBox(landmarks, canvasWidth, canvasHeight) {
  * @param {string} gesture - Name of detected gesture to display
  */
 export function drawBoundingBox(ctx, box, gesture) {
-    // Draw white border around hand
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 1.5;  // Thin border as requested by user
+    // Draw white border around hand for contrast on black video
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
     ctx.strokeRect(box.x, box.y, box.width, box.height);
     
-    // Draw white label background above box
-    ctx.fillStyle = '#FFFFFF';
+    // Draw pink label background above box
+    ctx.fillStyle = '#ff69b4';
     ctx.fillRect(
         box.x,              // Align with box left edge
         box.y - 30,         // Position above box
@@ -178,8 +178,8 @@ export function drawBoundingBox(ctx, box, gesture) {
         30                  // Label height
     );
     
-    // Draw black text on white background
-    ctx.fillStyle = '#000000';
+    // Draw white text on pink background
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 20px Arial';
     ctx.fillText(
         gesture,            // Gesture name

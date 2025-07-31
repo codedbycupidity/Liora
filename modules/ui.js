@@ -14,8 +14,7 @@ export class UIManager {
             statusText: document.getElementById('statusText'),          // Status messages
             gestureResult: document.getElementById('gestureResult'),    // Detected gesture display
             startButton: document.getElementById('startButton'),        // Camera start button
-            detectModeBtn: document.getElementById('detectModeBtn'),    // Detection mode button
-            trainModeBtn: document.getElementById('trainModeBtn'),      // Training mode button
+            modeToggle: document.getElementById('modeToggle'),          // Mode toggle switch
             trainingPanel: document.getElementById('trainingPanel'),    // Training controls panel
             captureBtn: document.getElementById('captureBtn'),          // Capture sample button
             trainingInfo: document.getElementById('trainingInfo'),      // Training status text
@@ -41,13 +40,11 @@ export class UIManager {
         
         if (mode === 'detect') {
             // Activate detect mode UI
-            this.elements.detectModeBtn.classList.add('active');
-            this.elements.trainModeBtn.classList.remove('active');
+            this.elements.modeToggle.checked = false;
             this.elements.trainingPanel.style.display = 'none';
         } else {
             // Activate training mode UI
-            this.elements.trainModeBtn.classList.add('active');
-            this.elements.detectModeBtn.classList.remove('active');
+            this.elements.modeToggle.checked = true;
             this.elements.trainingPanel.style.display = 'block';
         }
     }
@@ -150,18 +147,12 @@ export class UIManager {
             }
         });
 
-        // Mode switching buttons
-        this.elements.detectModeBtn.addEventListener('click', () => {
-            this.setMode('detect');
+        // Mode toggle switch
+        this.elements.modeToggle.addEventListener('change', (e) => {
+            const mode = e.target.checked ? 'train' : 'detect';
+            this.setMode(mode);
             if (this.callbacks.onModeChange) {
-                this.callbacks.onModeChange('detect');
-            }
-        });
-
-        this.elements.trainModeBtn.addEventListener('click', () => {
-            this.setMode('train');
-            if (this.callbacks.onModeChange) {
-                this.callbacks.onModeChange('train');
+                this.callbacks.onModeChange(mode);
             }
         });
 
