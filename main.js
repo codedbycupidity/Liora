@@ -8,12 +8,27 @@ const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 // Keep a global reference of the window object
 let mainWindow;
 let pythonProcess;
 
 // Enable live reload for Electron in development
-const isDev = process.argv.includes('--dev');
+const isDev = process.argv.includes('--dev') || !app.isPackaged;
+
+// Auto-reload in development
+if (isDev) {
+    try {
+        require('electron-reload')(__dirname, {
+            electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron'),
+            hardResetMethod: 'exit'
+        });
+    } catch (e) {
+        console.log('electron-reload not available, using manual reload only');
+    }
+}
 
 /**
  * Create the main application window
@@ -21,9 +36,11 @@ const isDev = process.argv.includes('--dev');
 function createWindow() {
     // Create the browser window with Photo Booth-like dimensions
     mainWindow = new BrowserWindow({
-        width: 860,      // Photo Booth default width
-        height: 640,     // Photo Booth default height
-        resizable: false, // Fixed size like Photo Booth
+        width: 1200,     // Larger default width for better UI
+        height: 800,     // Larger default height
+        minWidth: 800,   // Minimum width
+        minHeight: 600,  // Minimum height
+        resizable: true, // Make window resizable
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -157,6 +174,20 @@ function createMenu() {
             label: 'View',
             submenu: [
                 {
+                    label: 'Reload',
+                    accelerator: 'CmdOrCtrl+R',
+                    click: () => {
+                        mainWindow.webContents.reload();
+                    }
+                },
+                {
+                    label: 'Force Reload',
+                    accelerator: 'CmdOrCtrl+Shift+R',
+                    click: () => {
+                        mainWindow.webContents.reloadIgnoringCache();
+                    }
+                },
+                {
                     label: 'Toggle Developer Tools',
                     accelerator: process.platform === 'darwin' ? 'Alt+Cmd+I' : 'Ctrl+Shift+I',
                     click: () => {
@@ -239,6 +270,15 @@ function createMenu() {
 // IPC handlers for renderer process communication
 ipcMain.handle('get-app-path', () => {
     return app.getPath('userData');
+});
+
+ipcMain.handle('get-env-vars', () => {
+    return {
+        AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+        AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+        S3_BUCKET: process.env.S3_BUCKET,
+        AWS_REGION: process.env.AWS_REGION || 'us-east-1'
+    };
 });
 
 ipcMain.handle('show-save-dialog', async (event, defaultFileName) => {

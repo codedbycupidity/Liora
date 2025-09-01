@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Get app data path for storing files
     getAppPath: () => ipcRenderer.invoke('get-app-path'),
     
+    // Get environment variables
+    getEnvVars: () => ipcRenderer.invoke('get-env-vars'),
+    
     // Show save dialog
     showSaveDialog: (defaultFileName) => ipcRenderer.invoke('show-save-dialog', defaultFileName),
     

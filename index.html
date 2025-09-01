@@ -5,483 +5,503 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASL Gesture Recognition - Learn Sign Language</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff69b4',
+                        secondary: '#6366f1'
+                    }
+                }
+            }
         }
-
+    </script>
+    <style>
+        /* Custom styles for specific components */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1rem;
-            color: #333333;
-            margin: 0;
-            overflow: hidden;
-            /* Make the window draggable on macOS */
             -webkit-app-region: drag;
             -webkit-user-select: none;
             user-select: none;
         }
-
-        h1 {
-            color: #ff69b4;
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-            text-align: center;
-            margin-top: 0.5rem;
-        }
-
-        .subtitle {
-            color: #666666;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .main-content {
-            background: #f8f8f8;
-            border-radius: 12px;
-            padding: 1rem;
-            box-shadow: 0 4px 12px rgba(255, 105, 180, 0.15);
-            max-width: 820px;
-            width: 100%;
-            height: calc(100vh - 100px);
-            overflow-y: auto;
-            border: 1px solid #ffe0ec;
-            /* Make content non-draggable so buttons work */
+        
+        /* Make interactive elements non-draggable */
+        button, input, select, canvas, video {
             -webkit-app-region: no-drag;
         }
 
-        .container {
-            position: relative;
-            max-width: 480px;
-            width: 100%;
-            margin: 0 auto;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            background: #000000;
+        /* Custom animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
-
-        video {
-            width: 100%;
-            height: auto;
-            aspect-ratio: 4/3;
-            display: block;
-            background: #000;
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
         }
+        
+        .pulse { animation: pulse 1.5s infinite; }
+        .blink { animation: blink 1s infinite; }
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+        /* Menu animations */
+        .menu-slide-down {
+            animation: slideDown 0.3s ease-out;
         }
-
-        .info-panel {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #ffffff;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #ffe0ec;
-        }
-
-        .status {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .gesture-detected {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #ff69b4;
-            margin-top: 0.5rem;
-        }
-
-        .gesture-info {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #ffe0ec;
-            display: none; /* Hide by default in compact view */
-        }
-
-        .gesture-info h3 {
-            margin: 0 0 1rem 0;
-            color: #ff69b4;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-
-        .gesture-list {
-            list-style: none;
-            padding: 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-        }
-
-        .gesture-list li {
-            padding: 1rem;
-            background: #fef5f9;
-            border-radius: 6px;
-            border: 1px solid #ffe0ec;
-            transition: all 0.2s ease;
-            color: #333333;
-        }
-
-        .gesture-list li:hover {
-            background: #ffe0ec;
-            border-color: #ff69b4;
-        }
-
-        .gesture-list li strong {
-            color: #ff69b4;
-            font-weight: 600;
-        }
-
-        .loading {
-            color: #666;
-            font-weight: 400;
-        }
-
-        .error {
-            color: #ff1493;
-            font-weight: 500;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
             }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .main-content {
-                padding: 1.5rem;
-            }
-            
-            .gesture-list {
-                grid-template-columns: 1fr;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        .controls {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
+        /* Compact layout when multiple panels are visible */
+        .compact-layout {
+            font-size: 0.875rem;
+        }
+        
+        .compact-layout h3 {
+            font-size: 0.8125rem;
         }
 
-
-        .training-panel {
-            display: none;
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #ffe0ec;
+        /* Custom scrollbar for right panel */
+        .right-panel::-webkit-scrollbar {
+            width: 4px;
         }
-
-        .training-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 15px;
+        
+        .right-panel::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 2px;
         }
-
-        .gesture-button {
-            padding: 0.5rem 1rem;
-            background: #ffffff;
-            border: 2px solid #ffe0ec;
-            color: #333333;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            font-size: 0.85rem;
+        
+        .right-panel::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
         }
-
-        .gesture-button:hover {
-            border-color: #ff69b4;
-            background: #fef5f9;
-        }
-
-        .gesture-button.active {
-            background: #ff69b4;
-            color: #ffffff;
-            border-color: #ff69b4;
-        }
-
-        .capture-button {
-            background: #333333;
-            color: #ffffff;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            margin-top: 1rem;
-        }
-
-        .capture-button:hover {
-            background: #ff69b4;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
-        }
-
-        .capture-button:active {
-            transform: scale(0.98);
-        }
-
-        .capture-button:disabled {
-            background: #e0e0e0;
-            color: #999999;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .training-info {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .confidence-meter {
-            margin-top: 1rem;
-            height: 8px;
-            background: #f0f0f0;
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid #ffe0ec;
-        }
-
-        .confidence-fill {
-            height: 100%;
-            background: #ff69b4;
-            transition: width 0.3s ease;
-        }
-
-        .title-bar {
-            text-align: center;
-            padding: 10px 0 5px 0;
-            -webkit-app-region: drag;
-            width: 100%;
-        }
-
-        .info-toggle {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: #ff69b4;
-            color: #ffffff;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
-            transition: all 0.2s ease;
-            -webkit-app-region: no-drag;
-        }
-
-        .info-toggle:hover {
-            background: #ff1493;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 105, 180, 0.6);
-        }
-
-        .gesture-info.show {
-            display: block;
-        }
-
-        /* Mode Switch Styles */
-        .mode-switch-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .mode-label {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #666;
-        }
-
-        .mode-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-
-        .mode-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 26px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #ff69b4;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
-
-        .export-button {
-            background: #333333;
-            color: #ffffff;
-            border: none;
-            padding: 0.6rem 1.5rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .export-button:hover {
-            background: #555555;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        
+        .right-panel::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
-<body>
-    <div class="title-bar">
-        <h1>ASL Gesture Recognition</h1>
-        <p class="subtitle">Learn and practice American Sign Language with real-time hand tracking</p>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div class="container mx-auto px-4 py-3 max-w-7xl">
+        <!-- Header with Hamburger Menu -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="text-center flex-1">
+                <h1 class="text-3xl font-bold text-primary mb-1">ASL Gesture Recognition</h1>
+                <p class="text-slate-600 text-base">Learn and practice American Sign Language with real-time hand tracking</p>
+            </div>
+            
+            <!-- Hamburger Menu Button -->
+            <button id="menuToggle" class="p-3 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Menu Backdrop -->
+        <div id="menuBackdrop" class="hidden fixed inset-0 bg-black/20 z-40"></div>
+        
+        <!-- Hamburger Menu Panel (Overlay) -->
+        <div id="menuPanel" class="hidden fixed top-16 right-4 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 w-60">
+            <div class="p-4 space-y-2">
+                <!-- Mode Button -->
+                <button id="modeToggleBtn" class="w-full px-3 py-2 text-left bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                    Switch to Training
+                </button>
+                
+                <!-- Divider -->
+                <hr class="border-slate-200 my-3">
+                
+                <!-- Camera Controls -->
+                <button id="restartCameraBtn" class="w-full px-3 py-2 text-left bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm">
+                    📹 Restart Camera
+                </button>
+                
+                <!-- Clear Samples -->
+                <button id="clearSamplesBtn" class="w-full px-3 py-2 text-left bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
+                    🗑️ Clear Samples
+                </button>
+                
+                <!-- Divider -->
+                <hr class="border-slate-200 my-3">
+                
+                <!-- Export Options -->
+                <button id="exportGestureBtn" class="w-full px-3 py-2 text-left bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                    📤 Export Gesture
+                </button>
+                
+                <button id="exportAllBtn" class="w-full px-3 py-2 text-left bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+                    📦 Export All Data
+                </button>
+                
+                <!-- S3 Options -->
+                <button id="s3ConfigBtn" class="w-full px-3 py-2 text-left bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm">
+                    ☁️ S3 Status
+                </button>
+                
+                <button id="exportS3Btn" class="w-full px-3 py-2 text-left bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors text-sm">
+                    ☁️ Export to S3
+                </button>
+                
+                <button id="loadS3Btn" class="w-full px-3 py-2 text-left bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors text-sm">
+                    ☁️ Load from S3
+                </button>
+                
+                <!-- Divider -->
+                <hr class="border-slate-200 my-3">
+                
+                <!-- Training Metrics -->
+                <button id="metricsToggle" class="w-full px-3 py-2 text-left bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                    📊 Show Metrics
+                </button>
+
+                <!-- Landmark Debug -->
+                <button id="debugToggle" class="w-full px-3 py-2 text-left bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm">
+                    🔍 Show Debug
+                </button>
+
+                <!-- Help -->
+                <button id="infoToggle" class="w-full px-3 py-2 text-left bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm">
+                    Show Gestures
+                </button>
+            </div>
+        </div>
+
+        <!-- Main App Container -->
+        <div class="bg-white rounded-3xl shadow-2xl p-6">
+
+            <div class="flex gap-6">
+                <!-- Left Column: Video + Controls -->
+                <div class="flex-1 flex flex-col">
+                    <!-- Video Section -->
+                    <div class="relative bg-black rounded-2xl overflow-hidden shadow-xl">
+                        <video id="webcam" autoplay muted playsinline class="w-full h-auto"></video>
+                        <canvas id="output" class="absolute inset-0 w-full h-full"></canvas>
+                    </div>
+                    
+                    <!-- Training Controls Below Video (when in training mode) -->
+                    <div id="trainingControlsMain" class="mt-3" style="display: none;">
+                        <!-- Static gesture controls -->
+                        <div id="staticControlsMain" class="space-y-2" style="display: none;">
+                            <button id="captureBtnMain" class="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-semibold text-base shadow-lg">
+                                📸 Capture Sample
+                            </button>
+                        </div>
+
+                        <!-- Motion gesture controls -->
+                        <div id="motionControlsMain" class="space-y-2" style="display: none;">
+                            <div class="flex gap-3">
+                                <button id="startRecordBtnMain" class="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold text-base shadow-lg">
+                                    🔴 Start Recording
+                                </button>
+                                <button id="stopRecordBtnMain" class="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold pulse text-base shadow-lg" style="display: none;">
+                                    ⏹️ Stop Recording
+                                </button>
+                            </div>
+                            
+                            <div id="recordingStatusMain" class="bg-red-50 border border-red-200 rounded-lg p-3 text-center" style="display: none;">
+                                <div class="text-red-600 font-semibold blink">🔴 Recording Motion...</div>
+                                <div id="recordingTimerMain" class="text-slate-700 font-mono text-lg">0.0s</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side Panel -->
+                <div class="w-80 space-y-3">
+                    <!-- Status Card -->
+                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                        <div class="mb-2">
+                            <h3 class="font-semibold text-slate-800 text-sm">Status</h3>
+                        </div>
+                        <p id="statusText" class="text-xs text-slate-600 mb-2">Initializing...</p>
+                        <div class="confidence-meter h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div id="confidenceFill" class="h-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 rounded-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Gesture Result Card -->
+                    <div id="gestureResult" class="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                        <div class="text-green-800 font-semibold text-sm">Ready to detect gestures</div>
+                    </div>
+
+                    <!-- Training Metrics Panel (hidden by default) -->
+                    <div id="trainingMetrics" class="bg-white rounded-xl p-2 border border-slate-200" style="display: none;">
+                        <div class="mb-1">
+                            <h3 class="font-semibold text-slate-800 text-xs">Training Progress</h3>
+                        </div>
+                        
+                        <!-- Overall Progress -->
+                        <div class="mb-2">
+                            <div class="flex justify-between text-xs text-slate-600">
+                                <span>Progress</span>
+                                <span id="trainingProgress">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-1">
+                                <div id="trainingProgressBar" class="bg-blue-500 h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Metrics Grid -->
+                        <div class="grid grid-cols-3 gap-1 mb-2 text-xs">
+                            <div>
+                                <span class="text-slate-500" style="font-size: 10px;">Epoch</span>
+                                <div id="currentEpoch" class="font-mono" style="font-size: 10px;">0/0</div>
+                            </div>
+                            <div>
+                                <span class="text-slate-500" style="font-size: 10px;">Loss</span>
+                                <div id="currentLoss" class="font-mono text-red-600" style="font-size: 10px;">--</div>
+                            </div>
+                            <div>
+                                <span class="text-slate-500" style="font-size: 10px;">Acc</span>
+                                <div id="currentAccuracy" class="font-mono text-green-600" style="font-size: 10px;">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Before/After -->
+                        <div class="grid grid-cols-2 gap-1 mb-2">
+                            <div class="bg-slate-50 p-1 rounded text-center">
+                                <div class="text-slate-500" style="font-size: 10px;">Before</div>
+                                <div id="beforeAccuracy" class="font-mono text-red-600" style="font-size: 10px;">--</div>
+                            </div>
+                            <div class="bg-slate-50 p-1 rounded text-center">
+                                <div class="text-slate-500" style="font-size: 10px;">After</div>
+                                <div id="afterAccuracy" class="font-mono text-green-600" style="font-size: 10px;">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Confidence Chart -->
+                        <div class="h-8 bg-slate-50 rounded relative overflow-hidden mb-2">
+                            <canvas id="confidenceChart" class="w-full h-full"></canvas>
+                        </div>
+
+                        <!-- Data Summary -->
+                        <div id="trainingDataSummary" class="text-xs text-slate-500 leading-tight" style="font-size: 10px;">
+                            No training data
+                        </div>
+                    </div>
+
+                    <!-- Landmark Debug Panel (hidden by default) -->
+                    <div id="landmarkDebug" class="bg-white rounded-xl p-3 border border-slate-200" style="display: none;">
+                        <div class="mb-2">
+                            <h3 class="font-semibold text-slate-800 text-sm">Live Landmarks</h3>
+                        </div>
+                        
+                        <!-- Model Prediction -->
+                        <div class="mb-3 p-2 bg-slate-50 rounded-lg">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-medium text-slate-700">Prediction:</span>
+                                <span id="modelPrediction" class="font-mono text-xs text-primary">--</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-600">Confidence:</span>
+                                <span id="modelConfidence" class="font-mono text-xs text-green-600">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Two Column Layout -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <!-- Landmark Values -->
+                            <div>
+                                <div class="text-xs text-slate-600 mb-1">Landmarks</div>
+                                <div id="landmarkValues" class="text-xs font-mono text-slate-500 space-y-0 max-h-24 overflow-y-auto leading-none" style="font-size: 10px;">
+                                    No hand detected
+                                </div>
+                            </div>
+
+                            <!-- Landmark Visualization -->
+                            <div>
+                                <div class="text-xs text-slate-600 mb-1">Preview</div>
+                                <div class="bg-slate-50 rounded relative">
+                                    <canvas id="landmarkPreview" width="100" height="75" class="w-full h-auto"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Training Info (when in training mode) -->
+                    <div id="trainingControls" class="bg-white rounded-xl p-3 border border-slate-200" style="display: none;">
+                        <!-- Hidden duplicate controls - kept for compatibility -->
+                        <div id="staticControls" style="display: none;">
+                            <button id="captureBtn" style="display: none;"></button>
+                        </div>
+                        <div id="motionControls" style="display: none;">
+                            <button id="startRecordBtn" style="display: none;"></button>
+                            <button id="stopRecordBtn" style="display: none;"></button>
+                            <div id="recordingStatus" style="display: none;"></div>
+                            <div id="recordingTimer" style="display: none;"></div>
+                        </div>
+
+                        <div id="trainingInfo" class="text-center text-slate-600 text-sm">Select a gesture from below to start training</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Panel -->
+            <div id="trainingPanel" class="mt-6 bg-primary/5 border border-primary/20 rounded-2xl p-4" style="display: none;">
+                <h3 class="text-xl font-bold text-primary text-center mb-3">Training Mode</h3>
+                <p class="text-slate-600 text-center mb-4">Select a gesture and capture samples to improve accuracy</p>
+                
+                <div class="space-y-4">
+                    <!-- Static Gestures Section -->
+                    <div class="bg-white rounded-xl p-4 border border-slate-200">
+                        <h4 class="text-lg font-semibold text-primary mb-2">Static Gestures</h4>
+                        <p class="text-sm text-slate-500 mb-4">Single hand positions - hold pose and click capture</p>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors" data-gesture="I Love You">I Love You</button>
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors" data-gesture="Good">Good</button>
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors" data-gesture="Bad">Bad</button>
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors" data-gesture="I/I'm">I/I'm</button>
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors" data-gesture="No">No</button>
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors" data-gesture="Okay">Okay</button>
+                        </div>
+                    </div>
+
+                    <!-- Motion Gestures Section -->
+                    <div class="bg-white rounded-xl p-4 border border-slate-200">
+                        <h4 class="text-lg font-semibold text-primary mb-2">Motion Gestures</h4>
+                        <p class="text-sm text-slate-500 mb-4">Movement-based - perform motion, then use recording controls</p>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors relative" data-gesture="Hello" data-motion="true">
+                                Hello (Wave)
+                                <span class="absolute -top-1 -right-1 text-xs">↔️</span>
+                            </button>
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors relative" data-gesture="Yes" data-motion="true">
+                                Yes (Knock)
+                                <span class="absolute -top-1 -right-1 text-xs">↔️</span>
+                            </button>
+                            <button class="gesture-button px-4 py-2 bg-white border-2 border-primary/20 text-slate-700 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors relative" data-gesture="Thank You" data-motion="true">
+                                Thank You
+                                <span class="absolute -top-1 -right-1 text-xs">↔️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Training Controls -->
+                    <div class="bg-white rounded-xl p-4 border border-slate-200">
+                        <!-- Static gesture controls -->
+                        <div id="staticControls" class="space-y-3" style="display: none;">
+                            <button id="captureBtn" class="w-full px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors font-semibold">
+                                📸 Capture Sample
+                            </button>
+                        </div>
+
+                        <!-- Motion gesture controls -->
+                        <div id="motionControls" class="space-y-3" style="display: none;">
+                            <div class="flex gap-3">
+                                <button id="startRecordBtn" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                                    🔴 Start Recording
+                                </button>
+                                <button id="stopRecordBtn" class="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold pulse" style="display: none;">
+                                    ⏹️ Stop Recording
+                                </button>
+                            </div>
+                            
+                            <div id="recordingStatus" class="bg-red-50 border border-red-200 rounded-lg p-3 text-center" style="display: none;">
+                                <div class="text-red-600 font-semibold blink">🔴 Recording...</div>
+                                <div id="recordingTimer" class="text-slate-700 font-mono text-base">0.0s</div>
+                            </div>
+                        </div>
+
+                        <div id="trainingInfo" class="text-center text-slate-600 mt-4">Select a gesture to start training</div>
+
+                        <!-- Action Buttons moved to hamburger menu -->
+                        <div class="text-center mt-6">
+                            <p class="text-sm text-slate-600">All training actions are now in the menu (☰) above</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info button moved to hamburger menu -->
+
+        <!-- Gesture Info Panel -->
+        <div class="gesture-info fixed bottom-20 right-6 bg-white border border-primary/20 rounded-2xl p-6 max-w-sm shadow-2xl transform translate-y-4 opacity-0 invisible transition-all">
+            <h3 class="text-lg font-bold text-primary mb-4 text-center">Supported Gestures</h3>
+            <div class="space-y-3">
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="font-semibold text-primary">Hello:</div>
+                    <div class="text-sm text-slate-600">Open palm waving side to side</div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="font-semibold text-primary">I Love You:</div>
+                    <div class="text-sm text-slate-600">Thumb, index, and pinky extended</div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="font-semibold text-primary">Good:</div>
+                    <div class="text-sm text-slate-600">Thumbs up with other fingers folded</div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="font-semibold text-primary">Bad:</div>
+                    <div class="text-sm text-slate-600">Thumbs down with other fingers folded</div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="font-semibold text-primary">Yes:</div>
+                    <div class="text-sm text-slate-600">Closed fist knocking motion</div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="font-semibold text-primary">Thank You:</div>
+                    <div class="text-sm text-slate-600">Open hand from chin moving forward</div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
     
-    <div class="main-content">
-        <div class="controls">
-            <div class="mode-switch-container">
-                <span class="mode-label">Detect</span>
-                <label class="mode-switch">
-                    <input type="checkbox" id="modeToggle">
-                    <span class="slider"></span>
-                </label>
-                <span class="mode-label">Train</span>
-            </div>
-        </div>
+    <!-- AWS SDK for JavaScript (v3) -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1591.0.min.js"></script>
     
-    <div class="container">
-        <video id="webcam" autoplay playsinline></video>
-        <canvas id="output"></canvas>
-    </div>
-    
-        <div class="info-panel">
-            <div class="status">
-                <span id="statusText" class="loading">Click "Start Camera" to begin</span>
-            </div>
-            <div id="gestureResult" class="gesture-detected"></div>
-            <div class="confidence-meter" style="display: none;">
-                <div class="confidence-fill" id="confidenceFill"></div>
-            </div>
-        </div>
-
-        <div class="training-panel" id="trainingPanel">
-            <h3>Training Mode</h3>
-            <p>Select a gesture and capture samples to improve accuracy:</p>
-            <div class="training-controls">
-                <button class="gesture-button" data-gesture="Hello">Hello</button>
-                <button class="gesture-button" data-gesture="I Love You">I Love You</button>
-                <button class="gesture-button" data-gesture="Good">Good</button>
-                <button class="gesture-button" data-gesture="Bad">Bad</button>
-                <button class="gesture-button" data-gesture="Yes">Yes</button>
-                <button class="gesture-button" data-gesture="I/I'm">I/I'm</button>
-                <button class="gesture-button" data-gesture="No">No</button>
-                <button class="gesture-button" data-gesture="Okay">Okay</button>
-                <button class="gesture-button" data-gesture="Thank You">Thank You</button>
-            </div>
-            <button class="capture-button" id="captureBtn" disabled>Capture Sample</button>
-            <div class="training-info" id="trainingInfo">Select a gesture to start training</div>
-            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <button class="export-button" id="exportGestureBtn">Export Gesture</button>
-                <button class="export-button" id="exportAllBtn">Export All Data</button>
-            </div>
-        </div>
-
-        <div class="gesture-info">
-            <h3>Supported Gestures</h3>
-            <ul class="gesture-list">
-                <li><strong>Hello:</strong> Open palm waving side to side</li>
-                <li><strong>I Love You:</strong> Thumb, index, and pinky extended; middle and ring fingers down</li>
-                <li><strong>Good:</strong> Thumbs up with other fingers folded</li>
-                <li><strong>Bad:</strong> Thumbs down with other fingers folded</li>
-                <li><strong>Yes:</strong> Closed fist with up-down knocking motion</li>
-                <li><strong>I/I'm:</strong> Point index finger upward (to self)</li>
-                <li><strong>No:</strong> Index and middle finger extended together</li>
-                <li><strong>Okay:</strong> Thumb and index finger forming a circle, other fingers up</li>
-                <li><strong>Thank You:</strong> Open hand at chin moving forward and down</li>
-            </ul>
-        </div>
-    </div>
-
-    <button class="info-toggle" id="infoToggle">Show Gestures</button>
-
+    <!-- MediaPipe Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=9"></script>
     <script>
-        // Handle gesture info toggle
-        document.addEventListener('DOMContentLoaded', () => {
+        // Check for required globals and handle gesture info toggle
+        window.addEventListener('load', () => {
+            console.log('Page loaded, checking dependencies...');
+            console.log('MediaPipe Holistic available:', typeof window.Holistic !== 'undefined');
+            console.log('MediaPipe Camera available:', typeof window.Camera !== 'undefined');
+            
+            // Handle gesture info toggle
             const infoToggle = document.getElementById('infoToggle');
             const gestureInfo = document.querySelector('.gesture-info');
             
-            infoToggle.addEventListener('click', () => {
-                gestureInfo.classList.toggle('show');
-                infoToggle.textContent = gestureInfo.classList.contains('show') ? 'Hide Gestures' : 'Show Gestures';
-            });
+            if (infoToggle && gestureInfo) {
+                infoToggle.addEventListener('click', () => {
+                    gestureInfo.classList.toggle('opacity-0');
+                    gestureInfo.classList.toggle('invisible');
+                    gestureInfo.classList.toggle('translate-y-4');
+                    
+                    const isShowing = !gestureInfo.classList.contains('opacity-0');
+                    infoToggle.textContent = isShowing ? 'Hide Gestures' : 'Show Gestures';
+                });
+            }
+
+            // Add active state styling for gesture buttons
+            const style = document.createElement('style');
+            style.textContent = `
+                .gesture-button.active {
+                    background-color: #ff69b4 !important;
+                    color: white !important;
+                    border-color: #ff69b4 !important;
+                }
+            `;
+            document.head.appendChild(style);
         });
     </script>
 </body>

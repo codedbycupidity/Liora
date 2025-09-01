@@ -4,6 +4,7 @@
  */
 
 import { detectGesture, GESTURES } from './gestures.js';
+import S3Storage from './s3-storage.js';
 
 /**
  * TrainingManager class handles all training-related functionality
@@ -13,6 +14,9 @@ import { detectGesture, GESTURES } from './gestures.js';
  */
 export class TrainingManager {
     constructor() {
+        // Initialize S3 storage
+        this.s3Storage = new S3Storage();
+        
         // Load existing training data from localStorage
         this.trainingData = this.loadTrainingData();
         
@@ -115,6 +119,9 @@ export class TrainingManager {
         
         // Also save to server for persistence
         this.saveToServer(gesture, sample);
+        
+        // Upload to S3 if configured
+        this.uploadToS3(gesture, sample);
         
         // Return updated count for UI feedback
         return this.trainingData[gesture].length;
@@ -343,6 +350,76 @@ export class TrainingManager {
             // Server might not be running - this is okay
             console.error('Error saving to server:', e);
             return false;
+        }
+    }
+
+    /**
+     * Upload training sample to S3
+     * @param {string} gesture - Gesture name
+     * @param {Array} sample - Landmark data
+     */
+    async uploadToS3(gesture, sample) {
+        try {
+            const result = await this.s3Storage.uploadTrainingData(gesture, sample, false);
+            if (result.success) {
+                console.log(`Uploaded ${gesture} sample to S3:`, result.key);
+            } else {
+                console.warn('S3 upload failed:', result.error);
+            }
+        } catch (error) {
+            console.warn('S3 upload error:', error);
+        }
+    }
+
+    /**
+     * Configure S3 storage
+     * @param {string} accessKeyId - AWS access key
+     * @param {string} secretAccessKey - AWS secret key  
+     * @param {string} bucketName - S3 bucket name
+     * @param {string} region - AWS region
+     */
+    configureS3(accessKeyId, secretAccessKey, bucketName, region = 'us-east-1') {
+        return this.s3Storage.configure(accessKeyId, secretAccessKey, bucketName, region);
+    }
+
+    /**
+     * Export all training data to S3
+     */
+    async exportAllToS3() {
+        try {
+            const result = await this.s3Storage.exportToS3(this.trainingData);
+            
+            // If export was successful, clear the local training data
+            if (result.success) {
+                console.log('S3 export successful, clearing local training data');
+                this.clearAllTrainingData();
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('Export to S3 failed:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Clear all training data from localStorage
+     */
+    clearAllTrainingData() {
+        this.trainingData = {};
+        this.saveTrainingData();
+        console.log('All training data cleared from local storage');
+    }
+
+    /**
+     * Get training data statistics from S3
+     */
+    async getS3Stats() {
+        try {
+            return await this.s3Storage.getTrainingStats();
+        } catch (error) {
+            console.error('Failed to get S3 stats:', error);
+            return { success: false, error: error.message };
         }
     }
 }
