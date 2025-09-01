@@ -905,23 +905,23 @@ export class UIManager {
     drawHandLandmarks(ctx, landmarks, width, height) {
         ctx.fillStyle = '#3b82f6';
         ctx.strokeStyle = '#1e40af';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         
         landmarks.forEach((landmark, index) => {
             const x = landmark.x * width;
             const y = landmark.y * height;
             
-            // Draw landmark point
+            // Draw landmark point (bigger for better visibility)
             ctx.beginPath();
-            ctx.arc(x, y, 3, 0, 2 * Math.PI);
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
             ctx.fill();
             ctx.stroke();
             
             // Draw landmark index for key points
             if (index === 0 || index === 4 || index === 8 || index === 12 || index === 16 || index === 20) {
                 ctx.fillStyle = '#1e40af';
-                ctx.font = '8px Arial';
-                ctx.fillText(index.toString(), x + 4, y - 2);
+                ctx.font = '10px Arial';
+                ctx.fillText(index.toString(), x + 5, y - 3);
                 ctx.fillStyle = '#3b82f6';
             }
         });
@@ -948,7 +948,7 @@ export class UIManager {
         ];
         
         ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         
         connections.forEach(([start, end]) => {
             if (landmarks[start] && landmarks[end]) {
